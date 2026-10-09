@@ -10,6 +10,7 @@ test('desktop package manifest covers required platforms and isolated web build 
  const m=JSON.parse(readFileSync('apps/desktop/package-manifest.json','utf8')) as Manifest;assert.equal(m.ffmpegPolicy,'system-provided');const by=new Map<string,Target>(m.targets.map((x):[string,Target]=>[x.os,x]));assert.deepEqual(by.get('macos')?.formats,['app','dmg']);assert.ok(by.get('windows')?.formats.includes('msi'));assert.ok(by.get('linux')?.formats.includes('appimage'));
  const root=mkdtempSync(join(tmpdir(),'flick-desktop-package-')),web=join(root,'web-dist'),studio=join(root,'studio-dist'),runtime=join(root,'runtime');
  try{
-  const r=spawnSync(process.execPath,['--experimental-strip-types','apps/desktop/build.ts'],{encoding:'utf8',env:{...process.env,FLICKSMITH_DESKTOP_WEB_DIST:web,FLICKSMITH_STUDIO_DIST:studio,FLICKSMITH_DESKTOP_RUNTIME:runtime}});assert.equal(r.status,0,r.stderr);assert.ok(existsSync(join(web,'index.html')));assert.ok(existsSync(join(web,'app.js')));
+  const r=spawnSync(process.execPath,['--experimental-strip-types','apps/desktop/build.ts'],{encoding:'utf8',env:{...process.env,FLICKSMITH_DESKTOP_WEB_DIST:web,FLICKSMITH_STUDIO_DIST:studio,FLICKSMITH_DESKTOP_RUNTIME:runtime}});assert.equal(r.status,0,r.stderr);
+  const htmlPath=join(web,'index.html');assert.ok(existsSync(htmlPath));const html=readFileSync(htmlPath,'utf8');const script=html.match(/<script[^>]+src=["']([^"']+\.js)["']/i)?.[1];assert.ok(script,'built index must reference a JavaScript entry');assert.ok(existsSync(join(web,script.replace(/^\//,''))),`missing built entry ${script}`);
  }finally{rmSync(root,{recursive:true,force:true});}
 });
