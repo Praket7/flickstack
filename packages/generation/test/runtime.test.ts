@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { GenerationProviderRegistry, GenerationRuntime, type GenerationProvider } from '../src/index.ts';
+import { JobScheduler } from '../../jobs/src/scheduler.ts';
+import { JobStore } from '../../jobs/src/store.ts';
+
+function setup(generate?:GenerationProvider['generate']){const root=mkdtempSync(join(tmpdir(),'flick-generation-'));const registry=new GenerationProviderRegistry();registry.register({manifest:()=>({provider:'fake',kinds:['image'],execution:'local',supportsTransparency:true,supportsMasks:false,supportsReferences:false,supportsStreaming:false,supportsCancellation:true}),generate:generate??(async(req)=>{const path=join(root,`${req.id}.png`);writeFileSync(path,Buffer.from('same-bytes'));return{requestId:req.id,provider:'fake',model:'fixture',outputs:[{path,mediaType:'image/png',sha256:''}]}})});const store=new JobStore();const scheduler=new JobScheduler(store,{cpu:1,io:1,gpu:1,model:1});return{root,registry,store,scheduler,runtime:new GenerationRuntime({registry,scheduler,stagingRoot:root})}}
+
+test('runtime stages hashed output without mutating a project and idempotently reuses request id',async()=>{const s=setup();const id=s.runtime.submit({id:'r',projectId:'p',kind:'image',inputAssetIds:[],parameters:{},provider:'fake'});assert.equal(s.runtime.submit({id:'r',projectId:'p',kind:'image',inputAssetIds:[],parameters:{},provider:'fake'}),id);await s.scheduler.runUntilIdle();assert.equal(s.runtime.status(id)?.state,'completed');const staged=s.runtime.staged(id);assert.equal(staged?.outputs[0].sha256.length,64);assert.ok(existsSync(staged!.outputs[0].path));s.store.close()});
+test('cancellation wins the provider completion race and discard removes staged visibility',async()=>{let release!:()=>void;const gate=new Promise<void>(r=>release=r);const s=setup(async(req,signal)=>{await gate;if(signal.aborted)throw new Error('aborted');const path=join(s.root,'cancel.png');writeFileSync(path,'x');return{requestId:req.id,provider:'fake',model:'fixture',outputs:[{path,mediaType:'image/png',sha256:''}]}});const id=s.runtime.submit({id:'cancel',projectId:'p',kind:'image',inputAssetIds:[],parameters:{}});const running=s.scheduler.runUntilIdle();s.runtime.cancel(id);release();await running;assert.equal(s.runtime.status(id)?.state,'cancelled');assert.equal(s.runtime.staged(id),undefined);s.runtime.discard(id);assert.equal(s.runtime.staged(id),undefined);s.store.close()});

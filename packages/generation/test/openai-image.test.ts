@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { OpenAIImageProvider } from '../src/index.ts';
+
+test('OpenAI adapter uses Responses image-generation semantics and never persists the key',async()=>{let body='';const png=Buffer.from('fake-png').toString('base64');const fetchImpl:typeof fetch=async(_url,init)=>{body=String(init?.body??'');return new Response(JSON.stringify({id:'resp_1',output:[{type:'image_generation_call',result:png}],usage:{total_tokens:12}}),{status:200,headers:{'content-type':'application/json'}})};const provider=new OpenAIImageProvider({apiKey:'sk-super-secret',fetchImpl,stagingRoot:mkdtempSync(join(tmpdir(),'openai-image-'))});const out=await provider.generate({id:'r',projectId:'p',kind:'image',prompt:'transparent hero',inputAssetIds:[],parameters:{background:'transparent'}},new AbortController().signal);assert.match(body,/image_generation/);assert.doesNotMatch(JSON.stringify(out),/sk-super-secret/);assert.equal(out.outputs.length,1);assert.equal(readFileSync(out.outputs[0].path).toString(),'fake-png')});
+test('OpenAI adapter sanitizes API errors and missing credentials',async()=>{assert.rejects(()=>new OpenAIImageProvider({apiKey:''}).generate({id:'r',projectId:'p',kind:'image',inputAssetIds:[],parameters:{}},new AbortController().signal),/API key/i);const provider=new OpenAIImageProvider({apiKey:'sk-secret',fetchImpl:async()=>new Response(JSON.stringify({error:{message:'bad sk-secret'}}),{status:400})});await assert.rejects(()=>provider.generate({id:'r',projectId:'p',kind:'image',inputAssetIds:[],parameters:{}},new AbortController().signal),e=>e instanceof Error&&!e.message.includes('sk-secret'))});

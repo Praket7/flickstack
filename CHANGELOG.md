@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.5.0-dev] - 2026-10-09
+
+### v0.5b — Generative Provider Runtime & Provenance
+
+- Added provider-neutral generation contracts and deterministic capability routing without silent provider fallback.
+- Added durable generation jobs backed by the existing scheduler, with idempotent submission, cancellation, staged output, explicit discard, budget limits, commercial-rights requirements, and sanitized provider errors.
+- Added content-addressed generated assets with explicit acceptance into canonical v3 project state, immutable generation provenance, and SHA-256 deduplication.
+- Added v3 generation records and layered generated-scene records with duplicate/reference/finite-value/credential validation.
+- Added MCP lifecycle tools for provider discovery, generation submission/status/cancellation, explicit acceptance, staged discard, and provenance-record removal. Staging operations do not mutate the canonical project revision.
+- Added an OpenAI Responses image-generation adapter with environment-sourced credentials, image/edit requests, optional reference-image resolution, transparent-output parameters, streamed partial-image handling, response metadata, cancellation, and no persisted API keys.
+- Added self-review regression gates for registry lookup, provider capability metadata, unit/cost budgets, commercial-rights policy, reference inputs, provider metadata, and streaming behavior.
+
+### Verification boundary
+
+- Provider tests use deterministic fixtures and mocked HTTP. CI never requires or spends a live model API credential.
+- Generated output is not part of canonical project state until an explicit revision-safe acceptance operation succeeds.
+- Rights metadata is recorded rather than inferred. Workflows that require confirmed commercial rights fail when a provider does not explicitly provide them.
+- Model/provider availability is capability-gated and never silently substituted.
+
 ## [0.4.0] - 2026-10-09
 
 ### Added
@@ -41,7 +60,7 @@
 - Agent Director artifacts for creative briefs, motion grammar, storyboards, shots, sound plans, and scene receipts.
 - Studio Edit/Motion/Graph/Audio/Director workspace state and v3 typed motion controllers with conflict-safe revision handling.
 - OTIO v3 motion metadata plus safe structured SVG/Lottie import foundations and explicit color/OpenFX capability declarations.
-- Synthetic premium UI-motion acceptance, parity, release, and security suites plus a measured scene-graph benchmark harness.
+- Synthetic premium motion acceptance, parity, release, and security suites plus a measured scene-graph benchmark harness.
 
 ### Changed
 

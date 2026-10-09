@@ -27,13 +27,16 @@ test('v2 catalog remains stable while v3 adds the professional motion surface',(
  assert.equal(names.some(n=>/shell|exec|command/.test(n)),false);
 });
 
-test('every mutating v3 tool requires expectedRevision and exposes no executable payload',()=>{
- const readOnly=new Set(['get_timeline','render_final_v3','get_render_diagnostics_v3']);
+test('every canonical-project mutating v3 tool requires expectedRevision and exposes no executable payload',()=>{
+ const nonProjectMutating=new Set([
+  'get_timeline','render_final_v3','get_render_diagnostics_v3',
+  'list_generation_providers','generate_asset','get_generation_job','cancel_generation','discard_generation',
+ ]);
  for(const tool of v3ToolCatalog){
   assert.ok(tool.inputSchema);
   assert.ok(tool.description.length>10);
   const schema=tool.inputSchema as {required?:string[];properties?:Record<string,unknown>};
-  if(!readOnly.has(tool.name)) assert.ok(schema.required?.includes('expectedRevision'),`${tool.name} must require expectedRevision`);
+  if(!nonProjectMutating.has(tool.name)) assert.ok(schema.required?.includes('expectedRevision'),`${tool.name} must require expectedRevision`);
   const serialized=JSON.stringify(tool.inputSchema).toLowerCase();
   assert.equal(/\b(shell|command|javascript|eval|executable)\b/.test(serialized),false,tool.name);
  }
