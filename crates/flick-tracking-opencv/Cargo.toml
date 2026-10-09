@@ -1,0 +1,18 @@
+[package]
+name = "flick-tracking-opencv"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+opencv-backend = ["dep:opencv"]
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+opencv = { version = "0.101.0", optional = true, default-features = false, features = ["clang-runtime", "imgproc", "video", "videoio", "features2d", "calib3d"] }
+
+[dev-dependencies]
+serde_json.workspace = true

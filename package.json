@@ -1,0 +1,25 @@
+{
+  "name": "flicksmith",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --experimental-strip-types --test 'packages/**/*.test.ts' 'apps/**/*.test.ts' 'tests/**/*.test.ts'",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "npm run typecheck && npm test",
+    "test:integration": "node --experimental-strip-types --test 'tests/integration/**/*.test.ts'"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.3"
+  },
+  "license": "Apache-2.0",
+  "description": "Local-first agent-native video editor with typed reversible operations, semantic coverage, Video Git, and deterministic FFmpeg rendering."
+}

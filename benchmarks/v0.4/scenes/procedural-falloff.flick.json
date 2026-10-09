@@ -1,0 +1,865 @@
+{
+  "id": "v04-procedural-falloff",
+  "name": "FlickSmith v0.4 benchmark — procedural-falloff",
+  "format": {
+    "width": 1080,
+    "height": 1920,
+    "fps": {
+      "numerator": 30,
+      "denominator": 1
+    },
+    "audioSampleRate": 48000
+  },
+  "assets": [
+    {
+      "id": "music",
+      "path": "/tmp/flicksmith-motion-v03-music.wav",
+      "kind": "audio",
+      "duration": 120
+    }
+  ],
+  "rootCompositionId": "root",
+  "compositions": [
+    {
+      "id": "comp-procedural-falloff",
+      "name": "procedural-falloff",
+      "width": 1080,
+      "height": 1920,
+      "tracks": [
+        {
+          "id": "motion-track",
+          "kind": "video",
+          "name": "Motion",
+          "zIndex": 10,
+          "clips": [
+            {
+              "id": "motion-clip",
+              "start": 0,
+              "duration": 120,
+              "sourceIn": 0,
+              "transform": {
+                "x": 0,
+                "y": 0,
+                "scaleX": 1,
+                "scaleY": 1,
+                "rotation": 0
+              },
+              "opacity": 1,
+              "blendMode": "normal",
+              "maskRefs": [],
+              "effectStack": [],
+              "enabled": true,
+              "props": {
+                "motionCompositionId": "motion-procedural-falloff"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "masks": [],
+  "audioBuses": [
+    {
+      "id": "master",
+      "name": "Master",
+      "effects": [],
+      "gainDb": 0,
+      "pan": 0
+    }
+  ],
+  "multicamGroups": [],
+  "perception": {
+    "providers": []
+  },
+  "preview": {
+    "quality": "full",
+    "preferGpu": true
+  },
+  "markers": [
+    {
+      "id": "beat-1",
+      "at": 30,
+      "label": "Beat"
+    }
+  ],
+  "style": {},
+  "provenance": [],
+  "checkpoints": [],
+  "branches": [],
+  "version": 3,
+  "motionCompositions": [
+    {
+      "id": "motion-procedural-falloff",
+      "name": "procedural-falloff",
+      "width": 1080,
+      "height": 1920,
+      "duration": 120,
+      "background": "#0b0d10",
+      "cameraId": "camera",
+      "layers": [
+        {
+          "id": "camera",
+          "kind": "camera",
+          "name": "camera",
+          "start": 0,
+          "duration": 120,
+          "enabled": true,
+          "locked": false,
+          "zIndex": 0,
+          "transform": {
+            "position": {
+              "baseValue": [
+                0,
+                0,
+                1000
+              ],
+              "keyframes": [
+                {
+                  "frame": 0,
+                  "value": [
+                    0,
+                    0,
+                    1000
+                  ],
+                  "interpolation": "bezier",
+                  "outTangent": {
+                    "x": 0.16,
+                    "y": 1
+                  }
+                },
+                {
+                  "frame": 60,
+                  "value": [
+                    12,
+                    -8,
+                    1000
+                  ],
+                  "interpolation": "bezier",
+                  "inTangent": {
+                    "x": 0.3,
+                    "y": 1
+                  },
+                  "outTangent": {
+                    "x": 0.16,
+                    "y": 1
+                  }
+                },
+                {
+                  "frame": 119,
+                  "value": [
+                    20,
+                    -14,
+                    1000
+                  ],
+                  "interpolation": "bezier",
+                  "inTangent": {
+                    "x": 0.3,
+                    "y": 1
+                  }
+                }
+              ]
+            },
+            "anchor": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            },
+            "scale": {
+              "baseValue": [
+                1,
+                1,
+                1
+              ]
+            },
+            "rotation": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "opacity": {
+            "baseValue": 1
+          },
+          "effects": [],
+          "masks": [],
+          "motionBlur": true,
+          "camera": {
+            "focalLength": {
+              "baseValue": 50
+            },
+            "focusDistance": {
+              "baseValue": 1000
+            },
+            "aperture": {
+              "baseValue": 2.8
+            },
+            "depthOfField": {
+              "baseValue": 0
+            }
+          }
+        },
+        {
+          "id": "panel",
+          "kind": "shape",
+          "name": "panel",
+          "start": 0,
+          "duration": 120,
+          "enabled": true,
+          "locked": false,
+          "zIndex": 1,
+          "transform": {
+            "position": {
+              "baseValue": [
+                128,
+                320,
+                0
+              ]
+            },
+            "anchor": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            },
+            "scale": {
+              "baseValue": [
+                1,
+                1,
+                1
+              ]
+            },
+            "rotation": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "opacity": {
+            "baseValue": 1
+          },
+          "effects": [],
+          "masks": [
+            {
+              "id": "panel-reveal",
+              "kind": "rect",
+              "geometry": {
+                "kind": "rect",
+                "width": 824,
+                "height": 760,
+                "radius": 44
+              },
+              "feather": {
+                "baseValue": 2
+              },
+              "expansion": {
+                "baseValue": 0
+              },
+              "invert": false,
+              "combine": "add"
+            }
+          ],
+          "motionBlur": true,
+          "shape": {
+            "kind": "rect",
+            "width": 824,
+            "height": 760,
+            "radius": 44
+          },
+          "shapeStyle": {
+            "fill": {
+              "baseValue": "#15181d"
+            }
+          }
+        },
+        {
+          "id": "ui-matte",
+          "kind": "shape",
+          "name": "ui-matte",
+          "start": 0,
+          "duration": 120,
+          "enabled": true,
+          "locked": false,
+          "zIndex": 2,
+          "transform": {
+            "position": {
+              "baseValue": [
+                176,
+                400,
+                0
+              ]
+            },
+            "anchor": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            },
+            "scale": {
+              "baseValue": [
+                1,
+                1,
+                1
+              ]
+            },
+            "rotation": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "opacity": {
+            "baseValue": 1
+          },
+          "effects": [],
+          "masks": [],
+          "motionBlur": true,
+          "shape": {
+            "kind": "rect",
+            "width": 728,
+            "height": 520,
+            "radius": 32
+          },
+          "shapeStyle": {
+            "fill": {
+              "baseValue": "#ffffff"
+            }
+          }
+        },
+        {
+          "id": "ui-surface",
+          "kind": "image",
+          "name": "ui-surface",
+          "start": 0,
+          "duration": 120,
+          "enabled": true,
+          "locked": false,
+          "zIndex": 3,
+          "transform": {
+            "position": {
+              "baseValue": [
+                176,
+                400,
+                0
+              ],
+              "keyframes": [
+                {
+                  "frame": 0,
+                  "value": [
+                    176,
+                    420,
+                    0
+                  ],
+                  "interpolation": "ease"
+                },
+                {
+                  "frame": 24,
+                  "value": [
+                    176,
+                    400,
+                    0
+                  ],
+                  "interpolation": "ease"
+                }
+              ]
+            },
+            "anchor": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            },
+            "scale": {
+              "baseValue": [
+                1,
+                1,
+                1
+              ]
+            },
+            "rotation": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "opacity": {
+            "baseValue": 1
+          },
+          "effects": [],
+          "masks": [],
+          "motionBlur": true,
+          "props": {
+            "width": 728,
+            "height": 520,
+            "uiSurface": true,
+            "trackingRecordId": "ui-track"
+          },
+          "matte": {
+            "sourceLayerId": "ui-matte",
+            "mode": "alpha"
+          }
+        },
+        {
+          "id": "title",
+          "kind": "text",
+          "name": "title",
+          "start": 0,
+          "duration": 120,
+          "enabled": true,
+          "locked": false,
+          "zIndex": 4,
+          "transform": {
+            "position": {
+              "baseValue": [
+                176,
+                176,
+                0
+              ]
+            },
+            "anchor": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            },
+            "scale": {
+              "baseValue": [
+                1,
+                1,
+                1
+              ]
+            },
+            "rotation": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "opacity": {
+            "baseValue": 0.92,
+            "behaviors": [
+              {
+                "id": "music-pulse",
+                "type": "audio-react",
+                "enabled": true,
+                "params": {
+                  "signal": "energy",
+                  "amount": 0.05
+                },
+                "bakeable": true,
+                "estimatedCost": 2
+              }
+            ]
+          },
+          "effects": [],
+          "masks": [],
+          "motionBlur": true,
+          "text": "Intent becomes finished motion.",
+          "textStyle": {
+            "fontSize": {
+              "baseValue": 72
+            },
+            "lineHeight": {
+              "baseValue": 82
+            },
+            "tracking": {
+              "baseValue": -1
+            },
+            "horizontalAlign": "left",
+            "fill": {
+              "baseValue": "#ffffff"
+            },
+            "paragraphBox": {
+              "x": 0,
+              "y": 0,
+              "width": 728,
+              "height": 180
+            }
+          },
+          "textSelectors": [
+            {
+              "id": "words",
+              "type": "words",
+              "start": 0,
+              "end": 4
+            }
+          ],
+          "textAnimators": [
+            {
+              "id": "word-rise",
+              "selectorIds": [
+                "words"
+              ],
+              "position": {
+                "baseValue": [
+                  0,
+                  0,
+                  0
+                ],
+                "keyframes": [
+                  {
+                    "frame": 0,
+                    "value": [
+                      0,
+                      36,
+                      0
+                    ],
+                    "interpolation": "ease"
+                  },
+                  {
+                    "frame": 18,
+                    "value": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "interpolation": "ease"
+                  }
+                ]
+              },
+              "opacity": {
+                "baseValue": 1,
+                "keyframes": [
+                  {
+                    "frame": 0,
+                    "value": 0,
+                    "interpolation": "linear"
+                  },
+                  {
+                    "frame": 12,
+                    "value": 1,
+                    "interpolation": "ease"
+                  }
+                ]
+              }
+            }
+          ],
+          "props": {
+            "role": "title"
+          }
+        },
+        {
+          "id": "accent",
+          "kind": "shape",
+          "name": "accent",
+          "start": 20,
+          "duration": 100,
+          "enabled": true,
+          "locked": false,
+          "zIndex": 5,
+          "transform": {
+            "position": {
+              "baseValue": [
+                176,
+                1120,
+                0
+              ]
+            },
+            "anchor": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            },
+            "scale": {
+              "baseValue": [
+                1,
+                1,
+                1
+              ]
+            },
+            "rotation": {
+              "baseValue": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "opacity": {
+            "baseValue": 1,
+            "behaviors": [
+              {
+                "id": "dup",
+                "type": "duplicator",
+                "enabled": true,
+                "seed": 42,
+                "params": {
+                  "count": 64,
+                  "distribution": "grid",
+                  "columns": 8,
+                  "indexContext": true,
+                  "timeOffsetFrames": 1
+                }
+              },
+              {
+                "id": "falloff",
+                "type": "falloff",
+                "enabled": true,
+                "seed": 42,
+                "params": {
+                  "shape": "radial",
+                  "radius": 420,
+                  "strength": 1
+                }
+              }
+            ]
+          },
+          "effects": [],
+          "masks": [],
+          "motionBlur": true,
+          "shape": {
+            "kind": "rect",
+            "width": 360,
+            "height": 12,
+            "radius": 6
+          },
+          "shapeStyle": {
+            "fill": {
+              "baseValue": "#ffffff"
+            }
+          }
+        }
+      ],
+      "motionBlur": {
+        "enabled": true,
+        "shutterAngle": 180,
+        "shutterPhase": 0,
+        "samples": 8,
+        "quality": "final"
+      },
+      "sharedTransitions": [
+        {
+          "id": "ui-focus",
+          "kind": "shared-element",
+          "start": 30,
+          "duration": 18,
+          "bindings": [
+            {
+              "id": "focus-binding",
+              "sourceLayerId": "title",
+              "destinationLayerId": "ui-surface",
+              "properties": [
+                "bounds",
+                "opacity"
+              ]
+            }
+          ]
+        }
+      ],
+      "compositingGraph": {
+        "nodes": [
+          {
+            "id": "layers",
+            "kind": "layer",
+            "inputs": [],
+            "params": {}
+          },
+          {
+            "id": "glow",
+            "kind": "glow",
+            "inputs": [
+              "layers"
+            ],
+            "params": {
+              "radius": 8
+            }
+          },
+          {
+            "id": "out",
+            "kind": "output",
+            "inputs": [
+              "glow"
+            ],
+            "params": {}
+          }
+        ],
+        "outputNodeId": "out"
+      },
+      "layoutVariants": [
+        {
+          "aspect": "portrait",
+          "constraintsByLayer": {
+            "title": [
+              {
+                "id": "title-left",
+                "type": "pin-left",
+                "value": 88
+              },
+              {
+                "id": "title-top",
+                "type": "pin-top",
+                "value": 160
+              },
+              {
+                "id": "title-width",
+                "type": "width",
+                "value": 760
+              }
+            ]
+          }
+        },
+        {
+          "aspect": "landscape",
+          "constraintsByLayer": {
+            "title": [
+              {
+                "id": "title-left",
+                "type": "pin-left",
+                "value": 120
+              },
+              {
+                "id": "title-top",
+                "type": "pin-top",
+                "value": 96
+              },
+              {
+                "id": "title-width",
+                "type": "width",
+                "value": 900
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "motionComponents": [],
+  "motionRigs": [],
+  "motionStyles": [
+    {
+      "id": "ui-native",
+      "name": "UI Native",
+      "durationFrames": 10,
+      "curve": {
+        "type": "bezier",
+        "outTangent": {
+          "x": 0.16,
+          "y": 1
+        },
+        "inTangent": {
+          "x": 0.3,
+          "y": 1
+        }
+      }
+    }
+  ],
+  "layoutTokens": {
+    "alignmentGrid": 8,
+    "spacing": 16,
+    "safeArea": 0.05
+  },
+  "motionTokens": {
+    "cameraCurve": "ui-native",
+    "transitionGrammar": [
+      "hard-cut",
+      "shared-element",
+      "camera-continuation"
+    ]
+  },
+  "typographyTokens": {
+    "titleMinPx": 48,
+    "bodyMinPx": 18
+  },
+  "audioAnalyses": [
+    {
+      "id": "music-analysis",
+      "assetId": "music",
+      "sourceHash": "fixture-audio-hash",
+      "algorithm": "fixture",
+      "algorithmVersion": "1",
+      "fps": 30,
+      "beats": [
+        0,
+        15,
+        30,
+        45,
+        60,
+        75,
+        90,
+        105
+      ],
+      "downbeats": [
+        0,
+        60
+      ],
+      "envelopes": {
+        "energy": [
+          {
+            "frame": 0,
+            "value": 0.2
+          },
+          {
+            "frame": 30,
+            "value": 0.8
+          },
+          {
+            "frame": 60,
+            "value": 0.4
+          }
+        ],
+        "low": [
+          {
+            "frame": 0,
+            "value": 0.2
+          }
+        ],
+        "mid": [
+          {
+            "frame": 0,
+            "value": 0.3
+          }
+        ],
+        "high": [
+          {
+            "frame": 0,
+            "value": 0.4
+          }
+        ],
+        "speech": []
+      }
+    }
+  ],
+  "trackingData": [
+    {
+      "id": "ui-track",
+      "algorithm": "fixture",
+      "algorithmVersion": "1",
+      "kind": "point",
+      "supported": true,
+      "keyframes": [
+        {
+          "frame": 0,
+          "value": [
+            0,
+            0
+          ]
+        },
+        {
+          "frame": 119,
+          "value": [
+            8,
+            4
+          ]
+        }
+      ]
+    }
+  ]
+}

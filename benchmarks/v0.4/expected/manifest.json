@@ -1,0 +1,227 @@
+{
+  "version": "0.4",
+  "format": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "responsiveVariants": [
+      "9:16",
+      "1:1"
+    ]
+  },
+  "parity": {
+    "rgbRmseMax": 0.02,
+    "alphaRmseMax": 0.005,
+    "timingErrorFrames": 0
+  },
+  "premium": {
+    "endCardHoldFrames30fps": 45,
+    "minGeneratedUiTextPx": 18,
+    "staticFrameRatioMax": 0.5,
+    "multiPropertyShotCoverageMin": 0.5,
+    "layeredMotionCoverageMin": 0.4
+  },
+  "scenes": [
+    {
+      "id": "kinetic-type",
+      "file": "kinetic-type.flick.json",
+      "requiredCapabilities": [
+        "text-shaping",
+        "per-glyph-animation",
+        "motion-blur"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    },
+    {
+      "id": "dense-ui-closeup",
+      "file": "dense-ui-closeup.flick.json",
+      "requiredCapabilities": [
+        "ui-surface",
+        "text-readability",
+        "masks"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    },
+    {
+      "id": "responsive-layout",
+      "file": "responsive-layout.flick.json",
+      "requiredCapabilities": [
+        "responsive-layout",
+        "safe-area",
+        "aspect-variants"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    },
+    {
+      "id": "nested-masks-mattes",
+      "file": "nested-masks-mattes.flick.json",
+      "requiredCapabilities": [
+        "masks",
+        "mattes",
+        "nested-compositing"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    },
+    {
+      "id": "parallax-camera",
+      "file": "parallax-camera.flick.json",
+      "requiredCapabilities": [
+        "camera-2.5d",
+        "layered-motion",
+        "parallax"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    },
+    {
+      "id": "dof-motion-blur",
+      "file": "dof-motion-blur.flick.json",
+      "requiredCapabilities": [
+        "depth-of-field",
+        "motion-blur",
+        "camera-2.5d"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    },
+    {
+      "id": "effect-graph",
+      "file": "effect-graph.flick.json",
+      "requiredCapabilities": [
+        "compositing-graph",
+        "blur",
+        "glow",
+        "color"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    },
+    {
+      "id": "shared-element-transition",
+      "file": "shared-element-transition.flick.json",
+      "requiredCapabilities": [
+        "shared-element-transition",
+        "geometry-morph",
+        "camera-continuation"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    },
+    {
+      "id": "procedural-falloff",
+      "file": "procedural-falloff.flick.json",
+      "requiredCapabilities": [
+        "duplicator",
+        "falloff",
+        "index-context"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    },
+    {
+      "id": "audio-reactive",
+      "file": "audio-reactive.flick.json",
+      "requiredCapabilities": [
+        "audio-analysis",
+        "audio-react",
+        "beat-snap"
+      ],
+      "targetFrames": [
+        0,
+        30,
+        60,
+        90,
+        119
+      ],
+      "cpu": {
+        "hash": null,
+        "tolerance": 0.001
+      }
+    }
+  ]
+}

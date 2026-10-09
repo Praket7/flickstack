@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+
+const json=(path:string)=>JSON.parse(readFileSync(path,'utf8'));
+const text=(path:string)=>readFileSync(path,'utf8');
+
+test('v0.4 release identity is consistent across product, desktop, MCP and native crates',()=>{
+  assert.equal(json('package.json').version,'0.4.0');
+  assert.equal(json('apps/desktop/package.json').version,'0.4.0');
+  assert.equal(json('apps/desktop/package-manifest.json').version,'0.4.0');
+  assert.equal(json('apps/desktop/src-tauri/tauri.conf.json').version,'0.4.0');
+  assert.match(text('apps/desktop/src-tauri/Cargo.toml'),/^version = "0\.4\.0"/m);
+  assert.match(text('crates/flick-preview/Cargo.toml'),/^version = "0\.4\.0"/m);
+  assert.match(text('Cargo.toml'),/^version = "0\.4\.0"/m);
+  assert.match(text('apps/mcp/src/server.ts'),/version:'0\.4\.0'/);
+  assert.match(text('apps/desktop/web-src/mcp-client.js'),/version:'0\.4\.0'/);
+});
+
+test('v0.4 release documentation describes native professional motion truthfully',()=>{
+  const readme=text('README.md'),changelog=text('CHANGELOG.md'),verification=text('docs/release-v0.4-verification.md');
+  assert.match(readme,/Current v0\.4 professional motion engine/i);
+  assert.match(changelog,/## \[0\.4\.0\]/);
+  for(const phrase of ['297/297','hybrid primitive raster','GPU composition','OpenCV','HarfRust','Parley']) assert.match(verification,new RegExp(phrase,'i'),phrase);
+  assert.match(verification,/hardware GPU.*pending|pending.*hardware GPU/is);
+  assert.match(verification,/Rust.*GitHub Actions|GitHub Actions.*Rust/is);
+  assert.doesNotMatch(verification,/full GPU vector rasterization:\s*\*\*?PASS/i);
+});
+
+test('native verification workflow enforces rust, tracking, and cross-platform package gates',()=>{
+  const workflow=text('.github/workflows/native-v04.yml');
+  for(const token of ['cargo fmt --check','cargo clippy --workspace --all-targets -- -D warnings','cargo test --workspace','opencv','macos-14','windows-latest']) assert.match(workflow,new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),token);
+});

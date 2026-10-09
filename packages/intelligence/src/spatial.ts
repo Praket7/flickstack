@@ -1,0 +1,9 @@
+export interface VisibilityLock {id:string;type:'visibility';hard:boolean;minVisible:number}
+export interface SpatialObservation {visibleFraction:number;confidence:number}
+export interface SpatialLockResult {status:'ok'|'warning'|'blocked';message:string}
+export function evaluateSpatialLock(lock:VisibilityLock,o:SpatialObservation):SpatialLockResult {if(o.visibleFraction>=lock.minVisible)return{status:'ok',message:'visibility satisfied'};if(o.confidence<.6)return{status:'warning',message:'visibility evidence confidence is too low for a hard rejection'};return lock.hard?{status:'blocked',message:`visible fraction ${o.visibleFraction} below ${lock.minVisible}`}:{status:'warning',message:'soft visibility lock violated'};}
+export interface CoverageBeat {id:string;query:string;requiredRole:string}
+export interface SpatialCandidate {beatId:string;role:string;visibleFraction:number;framing:'good'|'bad';confidence:number;duplicateRole?:boolean}
+export type SpatialDebtReason='no-footage'|'obscured'|'unsuitable-framing'|'duplicate-role'|'low-confidence';
+export interface SpatialCoverageDebt {beatId:string;reason:SpatialDebtReason}
+export function computeSpatialCoverageDebt(beats:CoverageBeat[],candidates:SpatialCandidate[]):SpatialCoverageDebt[]{const out:SpatialCoverageDebt[]=[];for(const b of beats){const c=candidates.filter(x=>x.beatId===b.id);if(!c.length){out.push({beatId:b.id,reason:'no-footage'});continue;}const reasons=new Set<SpatialDebtReason>();for(const x of c){if(x.visibleFraction<.7)reasons.add('obscured');if(x.framing==='bad')reasons.add('unsuitable-framing');if(x.confidence<.6)reasons.add('low-confidence');if(x.duplicateRole)reasons.add('duplicate-role');}if(!c.some(x=>x.visibleFraction>=.7&&x.framing==='good'&&x.confidence>=.6&&!x.duplicateRole))for(const r of reasons)out.push({beatId:b.id,reason:r});}return out;}

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('v04 desktop build sources frontend from apps/studio rather than legacy static demo',()=>{const build=readFileSync('apps/desktop/build.ts','utf8');assert.match(build,/apps['\"]?,['\"]studio/);assert.doesNotMatch(build,/web-src/);const studio=readFileSync('apps/studio/src/FlickSmithStudio.tsx','utf8');for(const token of ['Founder intro','Product macro','Customer reaction','Pulse 118'])assert.equal(studio.includes(token),false,`hardcoded demo token ${token}`);});

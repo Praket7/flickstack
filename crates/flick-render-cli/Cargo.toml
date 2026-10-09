@@ -1,0 +1,20 @@
+[package]
+name = "flick-render-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "flick-render"
+path = "src/main.rs"
+
+[dependencies]
+flick-render-contract = { path = "../flick-render-contract" }
+flick-motion-runtime = { path = "../flick-motion-runtime" }
+flick-text = { path = "../flick-text" }
+flick-render-core = { path = "../flick-render-core" }
+flick-render-cpu = { path = "../flick-render-cpu" }
+flick-render-wgpu = { path = "../flick-render-wgpu" }
+serde_json.workspace = true
+thiserror.workspace = true

@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('Graph workspace mounts editable curve editor and motion path overlay',()=>{const src=readFileSync('apps/studio/src/workspaces/GraphWorkspace.tsx','utf8');assert.match(src,/<CurveEditor\b/);assert.match(src,/<MotionPathOverlay\b/);assert.match(src,/onCurveChange/);});
+test('curve editor exposes value and speed modes plus draggable bezier handles',()=>{const src=readFileSync('apps/studio/src/panels/CurveEditor.tsx','utf8');assert.match(src,/mode.*value.*speed/s);assert.match(src,/onPointerMove/);assert.match(src,/speed/);assert.match(src,/influence/);});

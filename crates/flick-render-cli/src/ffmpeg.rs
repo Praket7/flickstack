@@ -1,0 +1,4 @@
+use std::{io::Write,process::{Child,Command,Stdio}};use thiserror::Error;
+#[derive(Debug,Error)]pub enum FfmpegError{#[error("spawn ffmpeg: {0}")]Spawn(#[from]std::io::Error),#[error("ffmpeg encoder exited unsuccessfully")]Status}
+pub struct RawEncoder{child:Child}
+impl RawEncoder{pub fn spawn(output:&str,width:u32,height:u32,fps:f64)->Result<Self,FfmpegError>{let child=Command::new("ffmpeg").args(["-hide_banner","-loglevel","error","-y","-f","rawvideo","-pix_fmt","rgba","-s",&format!("{width}x{height}"),"-r",&format!("{fps:.8}"),"-i","pipe:0","-c:v","libx264","-pix_fmt","yuv420p","-movflags","+faststart",output]).stdin(Stdio::piped()).spawn()?;Ok(Self{child})}pub fn frame(&mut self,rgba:&[u8])->Result<(),FfmpegError>{self.child.stdin.as_mut().ok_or(FfmpegError::Status)?.write_all(rgba)?;Ok(())}pub fn finish(mut self)->Result<(),FfmpegError>{drop(self.child.stdin.take());let s=self.child.wait()?;if s.success(){Ok(())}else{Err(FfmpegError::Status)}}}

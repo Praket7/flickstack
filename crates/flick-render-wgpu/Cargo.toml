@@ -1,0 +1,15 @@
+[package]
+name = "flick-render-wgpu"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+flick-render-contract = { path = "../flick-render-contract" }
+flick-render-core = { path = "../flick-render-core" }
+flick-render-cpu = { path = "../flick-render-cpu" }
+wgpu = "30.0.1"
+pollster = "0.4"
+thiserror.workspace = true
+bytemuck = { version = "1.24", features = ["derive"] }

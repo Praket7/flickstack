@@ -1,0 +1,17 @@
+node_modules/
+.DS_Store
+*.log
+.flicksmith/
+exports/
+coverage/
+dist/
+*.mp4
+*.mov
+*.wav
+!tests/fixtures/**
+
+.worktrees/
+.superpowers/
+apps/desktop/web-dist/
+
+apps/desktop/src-tauri/runtime/

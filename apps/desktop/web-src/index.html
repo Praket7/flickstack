@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FlickSmith</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header>
+  <div class="brand"><b>F</b><strong>FlickSmith</strong><span>v0.2 agent-native</span></div>
+  <div class="project-open"><input id="projectPath" placeholder="/path/to/project.flick.json"><button id="openProject">Open project</button></div>
+  <div id="status">No project open</div><button id="cap">System</button>
+</header>
+<main>
+  <aside class="left">
+    <section id="evidencePanel" class="panel"><h3>Semantic evidence</h3><p class="empty">Evidence becomes available after project analysis.</p></section>
+    <section id="repairPanel" class="panel"><h3>QC / Repair lanes</h3><p class="empty">No active repair lane.</p></section>
+  </aside>
+  <section class="workspace">
+    <div id="programMonitor" class="program-monitor"><canvas id="previewCanvas" width="640" height="360"></canvas><div id="previewState">Open a project to inspect preview capabilities.</div></div>
+    <section id="timelinePanel" class="timeline-panel"><div class="panel-title"><h3>Timeline</h3><span id="revision"></span></div><div id="timeline"></div></section>
+  </section>
+  <aside class="right">
+    <section id="effectsPanel" class="panel"><h3>Clip inspector</h3>
+      <div id="selection">Select a visual clip.</div>
+      <label>Opacity <input id="opacity" type="range" min="0" max="1" step="0.01" value="1"></label>
+      <div class="grid5"><label>X<input id="tx" type="number" step="1"></label><label>Y<input id="ty" type="number" step="1"></label><label>Scale X<input id="tsx" type="number" step="0.01" value="1"></label><label>Scale Y<input id="tsy" type="number" step="0.01" value="1"></label><label>Rotation<input id="tr" type="number" step="1"></label></div>
+      <button id="applyTransform">Apply transform</button>
+      <pre id="effectStack"></pre>
+    </section>
+    <section id="audioMixer" class="panel"><h3>Audio mixer</h3><div id="buses"></div></section>
+    <section id="multicamPanel" class="panel"><h3>Multicam</h3><div id="multicam"></div></section>
+    <section id="diagnosticsPanel" class="panel"><h3>Render health</h3><div id="previewCapabilities"></div><pre id="diagnostics"></pre><button id="refreshDiagnostics">Refresh diagnostics</button></section>
+    <pre id="sys"></pre>
+  </aside>
+</main>
+<script type="module" src="app.js"></script>
+</body></html>
