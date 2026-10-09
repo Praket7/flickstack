@@ -54,7 +54,6 @@ test('v3 project session detects revision conflicts',()=>{
   const conflict=session.apply(stale,{type:'set_motion_style',style:{id:'x',name:'X',curve:{type:'linear'}}});assert.equal(conflict.ok,false);
 });
 
-
 test('camera edits reject non-camera layers',()=>{
   let p=project();p=applyV3Operation(p,{type:'create_motion_composition',composition:{id:'mc',name:'M',width:640,height:360,duration:60,background:'transparent',layers:[]}}).project;
   p=applyV3Operation(p,{type:'add_motion_layer',compositionId:'mc',layer:structuredClone(layer)}).project;
@@ -77,4 +76,27 @@ test('rig binding rejects ambiguous layer targets across compositions sharing th
   const make=(id:string)=>({id,name:id,width:640,height:360,duration:60,background:'transparent' as const,rigId:'rig',layers:[{...structuredClone(layer),id:'shared'}]});
   p.motionCompositions.push(make('one'),make('two'));
   assert.throws(()=>applyV3Operation(p,{type:'bind_rig_control',rigId:'rig',binding:{controlId:'amount',layerId:'shared',propertyPath:'opacity'}}),/ambiguous.*rig layer/i);
+});
+
+test('v3 creates and removes motion rigs only when they are unreferenced',()=>{
+  let p=project();
+  p=applyV3Operation(p,{type:'create_motion_rig',rig:{id:'rig',name:'Rig',version:1,controls:[{id:'amount',name:'Amount',type:'number',defaultValue:1}],bindings:[]}}).project;
+  assert.equal(p.motionRigs[0].id,'rig');
+  p=applyV3Operation(p,{type:'create_motion_composition',composition:{id:'mc',name:'M',width:640,height:360,duration:60,background:'transparent',rigId:'rig',layers:[]}}).project;
+  assert.throws(()=>applyV3Operation(p,{type:'remove_motion_rig',rigId:'rig'}),/referenced/i);
+  p.motionCompositions[0].rigId=undefined;
+  const removed=applyV3Operation(p,{type:'remove_motion_rig',rigId:'rig'});
+  assert.equal(removed.project.motionRigs.length,0);
+});
+
+test('v3 upserts responsive variants and removes shared transitions',()=>{
+  let p=project();
+  p=applyV3Operation(p,{type:'create_motion_composition',composition:{id:'mc',name:'M',width:640,height:360,duration:60,background:'transparent',layers:[structuredClone(layer)]}}).project;
+  p=applyV3Operation(p,{type:'set_responsive_variant',compositionId:'mc',variant:{aspect:'portrait',constraintsByLayer:{title:[{id:'center',type:'center-x'}]}}}).project;
+  assert.equal(p.motionCompositions[0].layoutVariants?.length,1);
+  p=applyV3Operation(p,{type:'set_responsive_variant',compositionId:'mc',variant:{aspect:'portrait',constraintsByLayer:{title:[{id:'safe',type:'safe-area'}]}}}).project;
+  assert.equal(p.motionCompositions[0].layoutVariants?.length,1);assert.equal(p.motionCompositions[0].layoutVariants?.[0].constraintsByLayer.title[0].id,'safe');
+  p=applyV3Operation(p,{type:'add_shared_transition',compositionId:'mc',transition:{id:'fade',kind:'crossfade',start:0,duration:10}}).project;
+  const removed=applyV3Operation(p,{type:'remove_shared_transition',compositionId:'mc',transitionId:'fade'});
+  assert.equal(removed.project.motionCompositions[0].sharedTransitions?.length,0);
 });
