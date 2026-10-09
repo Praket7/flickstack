@@ -2,6 +2,25 @@
 
 ## [0.5.0-dev] - 2026-10-09
 
+### v0.5c — Generated Scene Assets
+
+- Added generated-scene contracts and deterministic strategy routing that prioritizes editable direct-alpha and multilayer paths before segmentation fallback or explicitly allowed flattened video.
+- Added typed Qwen-style layered-image, segmentation, and depth HTTP providers with capability/health checks, cancellation, sanitized failures, and provider-neutral core contracts.
+- Added occlusion analysis and transactional clean-plate repair planning so foreground/camera motion cannot silently reveal unsupported background pixels.
+- Added bounded depth normalization, conservative Z placement, camera safety envelopes, and editable native 2.5D motion presets.
+- Added native v3 generated-scene assembly using ordinary image layers, camera layers, typed operations, checkpoints, receipts, revision conflicts, and canonical generated-scene metadata.
+- Added generated-scene QC for missing clean plates, alpha halos, depth-order risk, camera excursions, clipping, and low decomposition confidence with localized layer/frame findings.
+- Added MCP and Studio generated-scene lifecycle surfaces for planning, building, animating, reviewing, and transactional layer regeneration.
+- Added canonical attachment integrity checks for source, layer, depth, mask, and clean-plate asset references, including plural clean-plate sets.
+- Added deterministic generated-scene acceptance coverage proving editable layers, active camera, independent layer motion, depth-derived parallax, provenance retention, save/reload survival, and no required image-to-video dependency.
+
+### v0.5c verification boundary
+
+- Generation/provider tests use fixtures and mocked/local HTTP contracts; CI does not require live model credentials.
+- Native 2.5D remains the release-gating default. Flattened generated video is never silently substituted for editable scene structure.
+- Hidden-region repair jobs remain staged until generated assets are explicitly accepted into canonical project state.
+- The normal CI suite gates TypeScript, MCP, Studio, schema, generated-scene QC, and acceptance behavior. Native Rust/render/package verification remains capability-gated by the repository's native workflow on `main`.
+
 ### v0.5b — Generative Provider Runtime & Provenance
 
 - Added provider-neutral generation contracts and deterministic capability routing without silent provider fallback.

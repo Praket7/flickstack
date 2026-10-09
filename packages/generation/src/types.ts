@@ -8,5 +8,6 @@ export interface GenerationUsage { units?:number; costUsd?:number }
 export interface GenerationRights { commercialAllowed?:boolean|null; attributionRequired?:boolean; policy?:string }
 export interface StagedGenerationOutput { requestId:string; provider:string; model:string; outputs:GeneratedOutput[]; usage?:GenerationUsage; rights?:GenerationRights; providerMetadata?:Record<string,unknown>; providerResponseId?:string; createdAt?:string }
 export interface GenerationProvider { manifest():ProviderCapabilityManifest; generate(request:GenerationRequest,signal:AbortSignal):Promise<StagedGenerationOutput> }
-export interface ResolvedGenerationInput { bytes:Uint8Array; mediaType:string }
+export interface ResolvedGenerationInput { bytes:Uint8Array; mediaType:string; width?:number; height?:number }
 export interface OpenAIImageProviderOptions { apiKey?:string; baseUrl?:string; fetchImpl?:typeof fetch; responseModel?:string; defaultModel?:string; defaultImageModel?:string; stagingRoot?:string; resolveInputAsset?:(assetId:string)=>ResolvedGenerationInput|Promise<ResolvedGenerationInput> }
+export interface StructuredHttpProviderOptions { baseUrl:string; fetchImpl?:typeof fetch; stagingRoot?:string; resolveInputAsset:(assetId:string)=>ResolvedGenerationInput|Promise<ResolvedGenerationInput> }

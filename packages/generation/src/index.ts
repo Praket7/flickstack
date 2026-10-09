@@ -4,3 +4,6 @@ export * from './staging.ts';
 export * from './runtime.ts';
 export * from './accept.ts';
 export * from './providers/openai-image.ts';
+export * from './providers/qwen-layered-http.ts';
+export * from './providers/depth-http.ts';
+export * from './providers/segmentation-http.ts';
