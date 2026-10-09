@@ -26,6 +26,9 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           replacements = {
+              'crates/flick-motion-runtime/src/behaviors.rs': [
+                  ('n(params.get("frequency"),.1)', 'n(params.get("frequency"),0.1)'),
+              ],
               'crates/flick-render-cli/src/scene_bridge.rs': [('.max(.1)', '.max(0.1)')],
               'crates/flick-render-core/tests/glyph_instances.rs': [
                   ('0.,.5]', '0.,0.5]'),
@@ -34,6 +37,7 @@ jobs:
               ],
               'crates/flick-render-cpu/src/effects.rs': [('/65535.-.5', '/65535.0-0.5')],
               'crates/flick-render-cpu/tests/camera_masks.rs': [('near:.1', 'near:0.1')],
+              'crates/flick-render-wgpu/src/dof.rs': [('.max(.1)', '.max(0.1)')],
               'crates/flick-render-wgpu/src/lib.rs': [('+.5', '+0.5')],
           }
           for name, pairs in replacements.items():
