@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { assertNoCredentialFields } from '../../schema/src/secrets.ts';
 import { parseProjectV3 } from '../../schema/src/v3/parse.ts';
 import type { Asset } from '../../schema/src/project.ts';
-import type { AnimatedProperty,AudioAnalysisRecord,CameraDefinition,FlickProjectV3,GenerationRecord,LayoutConstraint,LayoutVariantRule,MotionBehaviorInstance,MotionCompositingGraph,MotionComposition,MotionExpression,MotionKeyframe,MotionLayer,MotionMaskDefinition,MotionMatte,MotionRigBinding,MotionRigDefinition,MotionStyleDefinition,SharedTransition,TextSelector,TextStyle,TrackingRecord } from '../../schema/src/v3/project.ts';
+import type { AnimatedProperty,AudioAnalysisRecord,CameraDefinition,FlickProjectV3,GenerationRecord,LayeredImageScene,LayoutConstraint,LayoutVariantRule,MotionBehaviorInstance,MotionCompositingGraph,MotionComposition,MotionExpression,MotionKeyframe,MotionLayer,MotionMaskDefinition,MotionMatte,MotionRigBinding,MotionRigDefinition,MotionStyleDefinition,SharedTransition,TextSelector,TextStyle,TrackingRecord } from '../../schema/src/v3/project.ts';
 
 export type V3EditOperation=
  |{type:'create_motion_composition';composition:MotionComposition;intent?:string}
@@ -35,7 +35,8 @@ export type V3EditOperation=
  |{type:'analyze_audio';analysis:AudioAnalysisRecord;intent?:string}
  |{type:'set_motion_style';style:MotionStyleDefinition;intent?:string}
  |{type:'accept_generation';assets:Asset[];record:GenerationRecord;intent?:string}
- |{type:'discard_generation_record';generationRecordId:string;intent?:string};
+ |{type:'discard_generation_record';generationRecordId:string;intent?:string}
+ |{type:'attach_generated_scene';compositionId:string;scene:LayeredImageScene;intent?:string};
 
 export interface V3AffectedRange{compositionId:string;start:number;end:number}
 export interface V3Receipt{operation:V3EditOperation['type'];intent?:string;checkpointId:string;affectedIds:string[];affectedRanges:V3AffectedRange[]}
@@ -51,6 +52,7 @@ function animatedAt(l:MotionLayer,path:string):AnimatedProperty<unknown>{if(!/^[
 function assertUnreferenced(c:MotionComposition,id:string):void{for(const l of c.layers)if(l.parentId===id||l.matte?.sourceLayerId===id)throw new Error(`Layer ${id} is referenced by ${l.id}`);if(c.cameraId===id)throw new Error(`Layer ${id} is the active camera`);for(const t of c.sharedTransitions??[])for(const b of t.bindings??[])if(b.sourceLayerId===id||b.destinationLayerId===id)throw new Error(`Layer ${id} is referenced by transition ${t.id}`)}
 function upsertById<T extends{id:string}>(values:T[],value:T):void{const i=values.findIndex(v=>v.id===value.id);if(i>=0)values[i]=structuredClone(value);else values.push(structuredClone(value))}
 function assetSha(a:Asset):string|undefined{const value=a.metadata?.sha256;return typeof value==='string'&&value.length>0?value:undefined}
+function validateGeneratedSceneAttachment(p:FlickProjectV3,c:MotionComposition,scene:LayeredImageScene):void{const assetIds=new Set(p.assets.map(a=>a.id));for(const id of [scene.sourceAssetId,...scene.layerAssetIds,...(scene.depthAssetId?[scene.depthAssetId]:[]),...(scene.cleanPlateAssetId?[scene.cleanPlateAssetId]:[])])if(!assetIds.has(id))throw new Error(`Generated scene ${scene.id} references missing asset ${id}`);for(const sl of scene.layers){if(!assetIds.has(sl.assetId))throw new Error(`Generated scene ${scene.id} layer ${sl.id} references missing asset ${sl.assetId}`);const found=c.layers.some(l=>l.assetId===sl.assetId&&(l.props?.sourceLayerId===sl.id||l.props?.generatedSceneId===scene.id));if(!found)throw new Error(`Generated scene ${scene.id} layer ${sl.id} has no native motion layer in ${c.id}`)}}
 
 export function applyV3Operation(input:FlickProjectV3,op:V3EditOperation):V3EditResult{
  assertNoCredentialFields(op,'editOperation');const beforeRevision=projectRevisionV3(input),p=structuredClone(input),affectedIds:string[]=[],affectedRanges:V3AffectedRange[]=[];const touch=(c:MotionComposition,l?:MotionLayer,...ids:string[])=>{affectedIds.push(c.id,...ids);if(l)affectedIds.push(l.id);affectedRanges.push(rangeFor(c,l))};
@@ -86,6 +88,7 @@ export function applyV3Operation(input:FlickProjectV3,op:V3EditOperation):V3Edit
   case'set_motion_style':{upsertById(p.motionStyles,op.style);affectedIds.push(op.style.id);break}
   case'accept_generation':{p.generationRecords??=[];if(p.generationRecords.some(r=>r.id===op.record.id))throw new Error(`Duplicate generation record ${op.record.id}`);const idMap=new Map<string,string>();for(const incoming of op.assets){const hash=assetSha(incoming),sameHash=hash?p.assets.find(a=>assetSha(a)===hash):undefined;if(sameHash){idMap.set(incoming.id,sameHash.id);continue}const sameId=p.assets.find(a=>a.id===incoming.id);if(sameId)throw new Error(`Conflicting asset id ${incoming.id}`);p.assets.push(structuredClone(incoming));idMap.set(incoming.id,incoming.id);affectedIds.push(incoming.id)}const rec=structuredClone(op.record);rec.outputAssetIds=rec.outputAssetIds.map(id=>idMap.get(id)??id);p.generationRecords.push(rec);affectedIds.push(rec.id,...rec.outputAssetIds);break}
   case'discard_generation_record':{const records=p.generationRecords??[],i=records.findIndex(r=>r.id===op.generationRecordId);if(i<0)throw new Error(`Unknown generation record ${op.generationRecordId}`);records.splice(i,1);p.generationRecords=records;affectedIds.push(op.generationRecordId);break}
+  case'attach_generated_scene':{const c=composition(p,op.compositionId);validateGeneratedSceneAttachment(p,c,op.scene);p.generatedScenes??=[];upsertById(p.generatedScenes,op.scene);touch(c,undefined,op.scene.id,...op.scene.layerAssetIds);break}
  }
  const validated=parseProjectV3(p),checkpointId=checkpoint(input,op);validated.checkpoints.push({id:checkpointId,createdAt:new Date().toISOString(),parentId:input.checkpoints.at(-1)?.id,intent:op.intent});const ids=[...new Set(affectedIds)],ranges=affectedRanges.filter((r,i,a)=>a.findIndex(x=>x.compositionId===r.compositionId&&x.start===r.start&&x.end===r.end)===i),afterRevision=projectRevisionV3(validated);return{project:validated,checkpointId,receipt:{operation:op.type,intent:op.intent,checkpointId,affectedIds:ids,affectedRanges:ranges},diff:{beforeRevision,afterRevision,affectedIds:ids,affectedRanges:ranges},warnings:[]}
 }
