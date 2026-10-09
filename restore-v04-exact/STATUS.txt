@@ -1,0 +1,14 @@
+CURL_EXIT=0
+HTTP_CODE=200
+SIZE=290316
+SHA=e20d844cb4083eda67035f2b0b4385154a75e58aeeb49ea822c7a95c11b3c219
+TAR_EXIT=0
+TREE=90dc5dae850fcdac0c73906d0354ef596a2cccf4
+PUSH_EXIT=1
+EXPECTED_SIZE=290316
+EXPECTED_SHA=e20d844cb4083eda67035f2b0b4385154a75e58aeeb49ea822c7a95c11b3c219
+EXPECTED_TREE=90dc5dae850fcdac0c73906d0354ef596a2cccf4
+--- PUSH_LOG ---
+To https://github.com/Praket7/flickstack.git
+ ! [remote rejected] HEAD -> feature/flicksmith-v0.4-professional-motion-engine (refusing to allow a GitHub App to create or update workflow `.github/workflows/ci.yml` without `workflows` permission)
+error: failed to push some refs to 'https://github.com/Praket7/flickstack.git'
