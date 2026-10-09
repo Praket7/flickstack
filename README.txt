@@ -1,0 +1,1 @@
+FlickSmith v0.4 exact source restore staging. Archive SHA-256 e20d844cb4083eda67035f2b0b4385154a75e58aeeb49ea822c7a95c11b3c219. Expected source tree 90dc5dae850fcdac0c73906d0354ef596a2cccf4.
