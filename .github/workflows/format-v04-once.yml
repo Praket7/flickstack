@@ -19,6 +19,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.88.0
         with:
           components: rustfmt
+      # One-shot compatibility repair for parser-invalid literals from the v0.4 prototype source.
       - name: Repair legacy parser literals
         shell: bash
         run: |
