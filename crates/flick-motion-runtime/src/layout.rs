@@ -21,11 +21,7 @@ pub fn aspect(s: Surface) -> &'static str {
     }
 }
 
-pub fn layout_offset(
-    layer: &Value,
-    variants: Option<&Vec<Value>>,
-    surface: Surface,
-) -> [f64; 2] {
+pub fn layout_offset(layer: &Value, variants: Option<&Vec<Value>>, surface: Surface) -> [f64; 2] {
     let id = layer.get("id").and_then(Value::as_str).unwrap_or("");
     let Some(v) = variants.and_then(|vs| {
         vs.iter()

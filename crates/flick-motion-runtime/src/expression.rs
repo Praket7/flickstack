@@ -1,10 +1,173 @@
-use serde::{Deserialize,Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
-#[derive(Debug,Clone,Serialize,Deserialize)]pub struct Instruction{pub op:String,#[serde(default)]pub value:Option<f64>,#[serde(default)]pub name:Option<String>,#[serde(default)]pub argc:Option<usize>}
-#[derive(Debug,Clone,Serialize,Deserialize)]#[serde(rename_all="camelCase")]pub struct ExpressionProgramV1{pub version:u32,pub source:String,pub max_operations:usize,pub instructions:Vec<Instruction>}
-#[derive(Debug,Clone,Default)]pub struct ExpressionContext{pub frame:f64,pub time:f64,pub width:f64,pub height:f64,pub index:f64,pub seed:f64,pub vars:HashMap<String,f64>}
-#[derive(Debug,Error)]pub enum RuntimeError{#[error("unsupported bytecode version")]Version,#[error("operation budget exceeded")]Budget,#[error("invalid bytecode: {0}")]Bytecode(String),#[error("unknown identifier {0}")]Identifier(String),#[error("non-finite expression result")]NonFinite}
-fn noise(seed:f64,a:f64,b:f64)->f64{let x=((a*12.9898+b*78.233+seed*37.719).sin())*43758.5453;((x-x.floor())*2.0)-1.0}
-fn load(name:&str,c:&ExpressionContext)->Result<f64,RuntimeError>{Ok(match name{"frame"=>c.frame,"time"=>c.time,"width"=>c.width,"height"=>c.height,"index"=>c.index,"seed"=>c.seed,"pi"=>std::f64::consts::PI,"e"=>std::f64::consts::E,_=>*c.vars.get(name).ok_or_else(||RuntimeError::Identifier(name.into()))?})}
-pub fn evaluate_expression(p:&ExpressionProgramV1,c:&ExpressionContext)->Result<f64,RuntimeError>{if p.version!=1{return Err(RuntimeError::Version)}let mut s=Vec::<f64>::new();let mut left=p.max_operations;macro_rules! pop{()=>{s.pop().ok_or_else(||RuntimeError::Bytecode("stack underflow".into()))?}}for i in &p.instructions{if left==0{return Err(RuntimeError::Budget)}left-=1;match i.op.as_str(){"const"=>s.push(i.value.ok_or_else(||RuntimeError::Bytecode("const".into()))?),"load"=>s.push(load(i.name.as_deref().unwrap_or(""),c)?),"neg"=>{let a=pop!();s.push(-a)},"add"|"sub"|"mul"|"div"|"mod"|"pow"|"lt"|"lte"|"gt"|"gte"|"eq"|"neq"=>{let b=pop!();let a=pop!();let v=match i.op.as_str(){"add"=>a+b,"sub"=>a-b,"mul"=>a*b,"div"=>{if b==0.0{return Err(RuntimeError::Bytecode("division by zero".into()))}a/b},"mod"=>{if b==0.0{return Err(RuntimeError::Bytecode("division by zero".into()))}a%b},"pow"=>a.powf(b),"lt"=>(a<b)as u8 as f64,"lte"=>(a<=b)as u8 as f64,"gt"=>(a>b)as u8 as f64,"gte"=>(a>=b)as u8 as f64,"eq"=>(a==b)as u8 as f64,_=>(a!=b)as u8 as f64};s.push(v)},"call"=>{let n=i.argc.unwrap_or(0);if s.len()<n{return Err(RuntimeError::Bytecode("call stack".into()))}let a=s.split_off(s.len()-n);let v=match i.name.as_deref().unwrap_or(""){"sin"=>a[0].sin(),"cos"=>a[0].cos(),"tan"=>a[0].tan(),"abs"=>a[0].abs(),"min"=>a.iter().copied().fold(f64::INFINITY,f64::min),"max"=>a.iter().copied().fold(f64::NEG_INFINITY,f64::max),"clamp"=>a[0].max(a[1]).min(a[2]),"lerp"=>a[0]+(a[1]-a[0])*a[2],"floor"=>a[0].floor(),"ceil"=>a[0].ceil(),"round"=>a[0].round(),"sqrt"=>a[0].sqrt(),"pow"=>a[0].powf(a[1]),"exp"=>a[0].exp(),"log"=>a[0].ln(),"noise"=>noise(c.seed,*a.first().unwrap_or(&0.0),*a.get(1).unwrap_or(&0.0)),"select"=>if a[0]!=0.0{a[1]}else{a[2]},x=>return Err(RuntimeError::Bytecode(format!("unknown call {x}")))};s.push(v)},x=>return Err(RuntimeError::Bytecode(format!("unknown opcode {x}")))}if s.last().is_some_and(|x|!x.is_finite()){return Err(RuntimeError::NonFinite)}}if s.len()!=1{return Err(RuntimeError::Bytecode("result stack".into()))}Ok(s[0])}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Instruction {
+    pub op: String,
+    #[serde(default)]
+    pub value: Option<f64>,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub argc: Option<usize>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExpressionProgramV1 {
+    pub version: u32,
+    pub source: String,
+    pub max_operations: usize,
+    pub instructions: Vec<Instruction>,
+}
+#[derive(Debug, Clone, Default)]
+pub struct ExpressionContext {
+    pub frame: f64,
+    pub time: f64,
+    pub width: f64,
+    pub height: f64,
+    pub index: f64,
+    pub seed: f64,
+    pub vars: HashMap<String, f64>,
+}
+#[derive(Debug, Error)]
+pub enum RuntimeError {
+    #[error("unsupported bytecode version")]
+    Version,
+    #[error("operation budget exceeded")]
+    Budget,
+    #[error("invalid bytecode: {0}")]
+    Bytecode(String),
+    #[error("unknown identifier {0}")]
+    Identifier(String),
+    #[error("non-finite expression result")]
+    NonFinite,
+}
+fn noise(seed: f64, a: f64, b: f64) -> f64 {
+    let x = ((a * 12.9898 + b * 78.233 + seed * 37.719).sin()) * 43758.5453;
+    ((x - x.floor()) * 2.0) - 1.0
+}
+fn load(name: &str, c: &ExpressionContext) -> Result<f64, RuntimeError> {
+    Ok(match name {
+        "frame" => c.frame,
+        "time" => c.time,
+        "width" => c.width,
+        "height" => c.height,
+        "index" => c.index,
+        "seed" => c.seed,
+        "pi" => std::f64::consts::PI,
+        "e" => std::f64::consts::E,
+        _ => *c
+            .vars
+            .get(name)
+            .ok_or_else(|| RuntimeError::Identifier(name.into()))?,
+    })
+}
+pub fn evaluate_expression(
+    p: &ExpressionProgramV1,
+    c: &ExpressionContext,
+) -> Result<f64, RuntimeError> {
+    if p.version != 1 {
+        return Err(RuntimeError::Version);
+    }
+    let mut s = Vec::<f64>::new();
+    let mut left = p.max_operations;
+    macro_rules! pop {
+        () => {
+            s.pop()
+                .ok_or_else(|| RuntimeError::Bytecode("stack underflow".into()))?
+        };
+    }
+    for i in &p.instructions {
+        if left == 0 {
+            return Err(RuntimeError::Budget);
+        }
+        left -= 1;
+        match i.op.as_str() {
+            "const" => s.push(
+                i.value
+                    .ok_or_else(|| RuntimeError::Bytecode("const".into()))?,
+            ),
+            "load" => s.push(load(i.name.as_deref().unwrap_or(""), c)?),
+            "neg" => {
+                let a = pop!();
+                s.push(-a)
+            }
+            "add" | "sub" | "mul" | "div" | "mod" | "pow" | "lt" | "lte" | "gt" | "gte" | "eq"
+            | "neq" => {
+                let b = pop!();
+                let a = pop!();
+                let v = match i.op.as_str() {
+                    "add" => a + b,
+                    "sub" => a - b,
+                    "mul" => a * b,
+                    "div" => {
+                        if b == 0.0 {
+                            return Err(RuntimeError::Bytecode("division by zero".into()));
+                        }
+                        a / b
+                    }
+                    "mod" => {
+                        if b == 0.0 {
+                            return Err(RuntimeError::Bytecode("division by zero".into()));
+                        }
+                        a % b
+                    }
+                    "pow" => a.powf(b),
+                    "lt" => (a < b) as u8 as f64,
+                    "lte" => (a <= b) as u8 as f64,
+                    "gt" => (a > b) as u8 as f64,
+                    "gte" => (a >= b) as u8 as f64,
+                    "eq" => (a == b) as u8 as f64,
+                    _ => (a != b) as u8 as f64,
+                };
+                s.push(v)
+            }
+            "call" => {
+                let n = i.argc.unwrap_or(0);
+                if s.len() < n {
+                    return Err(RuntimeError::Bytecode("call stack".into()));
+                }
+                let a = s.split_off(s.len() - n);
+                let v = match i.name.as_deref().unwrap_or("") {
+                    "sin" => a[0].sin(),
+                    "cos" => a[0].cos(),
+                    "tan" => a[0].tan(),
+                    "abs" => a[0].abs(),
+                    "min" => a.iter().copied().fold(f64::INFINITY, f64::min),
+                    "max" => a.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+                    "clamp" => a[0].max(a[1]).min(a[2]),
+                    "lerp" => a[0] + (a[1] - a[0]) * a[2],
+                    "floor" => a[0].floor(),
+                    "ceil" => a[0].ceil(),
+                    "round" => a[0].round(),
+                    "sqrt" => a[0].sqrt(),
+                    "pow" => a[0].powf(a[1]),
+                    "exp" => a[0].exp(),
+                    "log" => a[0].ln(),
+                    "noise" => noise(
+                        c.seed,
+                        *a.first().unwrap_or(&0.0),
+                        *a.get(1).unwrap_or(&0.0),
+                    ),
+                    "select" => {
+                        if a[0] != 0.0 {
+                            a[1]
+                        } else {
+                            a[2]
+                        }
+                    }
+                    x => return Err(RuntimeError::Bytecode(format!("unknown call {x}"))),
+                };
+                s.push(v)
+            }
+            x => return Err(RuntimeError::Bytecode(format!("unknown opcode {x}"))),
+        }
+        if s.last().is_some_and(|x| !x.is_finite()) {
+            return Err(RuntimeError::NonFinite);
+        }
+    }
+    if s.len() != 1 {
+        return Err(RuntimeError::Bytecode("result stack".into()));
+    }
+    Ok(s[0])
+}
