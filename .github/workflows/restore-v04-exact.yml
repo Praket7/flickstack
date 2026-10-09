@@ -18,10 +18,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Fetch and verify exact v0.4 source snapshot
+      - name: Fetch verify and publish exact v0.4 source
         shell: bash
         env:
           SNAPSHOT_URL: 'https://sdmntprcentralus.oaiusercontent.com/files/00000000-28f0-81f5-9aa4-abaaea594a4f/raw?se=2026-10-09T11%3A24%3A45Z&sp=r&sv=2026-02-06&sr=b&scid=4a3e441b-1a27-56aa-9898-d9678fe03a4f&skoid=a1be202a-6464-476c-a496-723317c4a4db&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-09T01%3A18%3A10Z&ske=2026-10-10T01%3A18%3A10Z&sks=b&skv=2026-02-06&sig=eGkPTjK0A7WZ/%2Bb4bSAAJ2O8IUPkYOzO5qH5z1BnKYk%3D'
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           curl --fail --location --retry 3 --retry-delay 2 "$SNAPSHOT_URL" -o /tmp/flicksmith-v04-src.tar.xz
@@ -37,5 +38,3 @@ jobs:
           git commit -m "feat: FlickSmith v0.4 professional motion engine"
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force origin HEAD:refs/heads/feature/flicksmith-v0.4-professional-motion-engine
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
