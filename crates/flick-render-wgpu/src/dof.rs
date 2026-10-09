@@ -1,11 +1,1 @@
-pub fn circle_of_confusion(
-    depth: f32,
-    focus_distance: f32,
-    aperture: f32,
-    focal_length: f32,
-) -> f32 {
-    if depth <= 0. || focus_distance <= 0. {
-        return 0.;
-    }
-    ((depth - focus_distance).abs() / depth) * (focal_length / 50.) * (aperture.max(0.1).recip())
-}
+pub fn circle_of_confusion(depth:f32,focus_distance:f32,aperture:f32,focal_length:f32)->f32{if depth<=0.||focus_distance<=0.{return 0.}((depth-focus_distance).abs()/depth)*(focal_length/50.)*(aperture.max(.1).recip())}

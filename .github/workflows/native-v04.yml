@@ -18,6 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: npm install
@@ -29,11 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: dtolnay/rust-toolchain@1.88.0
         with:
           components: rustfmt, clippy
-      - name: Install native typography prerequisites
-        run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev pkg-config
       - name: Rust format
         run: cargo fmt --check
       - name: Rust clippy
@@ -45,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: dtolnay/rust-toolchain@1.88.0
       - name: Install OpenCV development runtime
         run: sudo apt-get update && sudo apt-get install -y libopencv-dev clang libclang-dev pkg-config
       - name: Test OpenCV tracking backend
@@ -65,10 +64,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: dtolnay/rust-toolchain@1.88.0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
       - run: npm install
       - name: macOS FFmpeg
         if: matrix.name == 'macos'
