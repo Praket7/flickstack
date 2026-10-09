@@ -3,7 +3,7 @@ name: Bootstrap FlickSmith history
 on:
   push:
     paths:
-      - 'bootstrap/flicksmith.bundle.b64'
+      - 'bootstrap/READY'
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base64 --decode bootstrap/flicksmith.bundle.b64 > /tmp/flicksmith.bundle
+          cat bootstrap/flicksmith.bundle.b64.part-* | base64 --decode > /tmp/flicksmith.bundle
           test "$(sha256sum /tmp/flicksmith.bundle | awk '{print $1}')" = "172e42853c25c81e5992d8a8bfe3d4494824c33f7cd89fea7e371918915e4de9"
           git fetch /tmp/flicksmith.bundle \
             refs/heads/publish-main:refs/remotes/bundle/publish-main \
