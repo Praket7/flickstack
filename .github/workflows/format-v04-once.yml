@@ -1,0 +1,34 @@
+name: Format v0.4 Rust Once
+
+on:
+  push:
+    branches: ['feature/flicksmith-v0.4-professional-motion-engine']
+    paths: ['.github/workflows/format-v04-once.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/flicksmith-v0.4-professional-motion-engine
+      - uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          components: rustfmt
+      - name: Format and commit Rust source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo fmt
+          if git diff --quiet; then
+            echo 'Already formatted.'
+            exit 0
+          fi
+          git config user.name 'Praket7'
+          git config user.email '149203433+Praket7@users.noreply.github.com'
+          git add '*.rs' ':/**.rs'
+          git commit -m 'style: rustfmt v0.4 native source'
+          git push origin HEAD:feature/flicksmith-v0.4-professional-motion-engine
