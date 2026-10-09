@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           cat bootstrap/payload-* | base64 --decode > /tmp/flicksmith.bundle
-          test "$(sha256sum /tmp/flicksmith.bundle | awk '{print $1}')" = "172e42853c25c81e5992d8a8bfe3d4494824c33f7cd89fea7e371918915e4de9"
+          test "$(sha256sum /tmp/flicksmith.bundle | awk '{print $1}')" = "7559472d604767fffde8416ac0256b23a1971bdd9beca3e33f10a81f7fdd0a3f"
           git fetch /tmp/flicksmith.bundle \
             refs/heads/publish-main:refs/remotes/bundle/publish-main \
             refs/heads/feature/flicksmith-v0.3-motion-architecture:refs/remotes/bundle/feature/flicksmith-v0.3-motion-architecture
