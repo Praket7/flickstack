@@ -27,10 +27,10 @@ export const toolCatalog:McpTool[]=[
  {name:'repair_segment',description:'Create a localized repair plan for one QC issue without rebuilding the project.',inputSchema:object({issueId:str},['issueId'])},
 ];
 
-
 const anyObject={type:'object',additionalProperties:true};
 const anyArray={type:'array'};
 const revision={type:'string',minLength:1};
+const boolean={type:'boolean'};
 export const v2ToolCatalog:McpTool[]=[
  {name:'get_timeline',description:'Return the canonical v2 project and content revision for conflict-safe edits.',inputSchema:object({})},
  {name:'set_transform',description:'Set a v2 clip transform through the canonical checkpointed mutation engine.',inputSchema:object({expectedRevision:revision,compositionId:str,clipId:str,transform:anyObject,intent},['expectedRevision','compositionId','clipId','transform'])},
@@ -45,4 +45,46 @@ export const v2ToolCatalog:McpTool[]=[
  {name:'render_final_v2',description:'Render the canonical v2 project deterministically through the FFmpeg reference backend.',inputSchema:object({output:str},['output'])},
  {name:'get_preview_capabilities',description:'Return explicit interactive preview backend availability and fallback state.',inputSchema:object({})},
  {name:'get_render_diagnostics',description:'Compile the render graph and report unsupported or approximate renderer capabilities before rendering.',inputSchema:object({})},
+];
+
+const ids={type:'array',items:str};
+const frame={type:'integer',minimum:0};
+const finite={type:'number'};
+const optionalIntent={intent};
+const mut=(properties:Record<string,unknown>,required:string[]):Record<string,unknown>=>object({expectedRevision:revision,...properties,...optionalIntent},['expectedRevision',...required]);
+export const v3ToolCatalog:McpTool[]=[
+ {name:'get_timeline',description:'Return the canonical v3 project and content revision for conflict-safe professional edits.',inputSchema:object({})},
+ {name:'create_motion_composition',description:'Create a native v3 motion composition through the checkpointed mutation engine.',inputSchema:mut({composition:anyObject},['composition'])},
+ {name:'add_motion_layer',description:'Add a native v3 motion layer to a composition with revision conflict protection.',inputSchema:mut({compositionId:str,layer:anyObject},['compositionId','layer'])},
+ {name:'remove_motion_layer',description:'Remove an unreferenced unlocked v3 motion layer reversibly.',inputSchema:mut({compositionId:str,layerId:str},['compositionId','layerId'])},
+ {name:'set_layer_metadata',description:'Update safe v3 layer metadata including name, lock, enabled state, and z-index.',inputSchema:mut({compositionId:str,layerId:str,name:str,locked:boolean,enabled:boolean,zIndex:{type:'integer'}},['compositionId','layerId'])},
+ {name:'set_layer_timing',description:'Set integer start and duration for a native v3 motion layer.',inputSchema:mut({compositionId:str,layerId:str,start:frame,duration:{type:'integer',minimum:1}},['compositionId','layerId','start','duration'])},
+ {name:'reparent_motion_layer',description:'Reparent a v3 motion layer while rejecting hierarchy cycles.',inputSchema:mut({compositionId:str,layerId:str,parentId:str},['compositionId','layerId'])},
+ {name:'set_motion_property',description:'Set the base value of a typed animatable v3 motion property.',inputSchema:mut({compositionId:str,layerId:str,path:str,value:{}},['compositionId','layerId','path','value'])},
+ {name:'set_motion_keyframes',description:'Replace keyframes on a typed animatable v3 motion property.',inputSchema:mut({compositionId:str,layerId:str,path:str,keyframes:anyArray},['compositionId','layerId','path','keyframes'])},
+ {name:'set_motion_expression',description:'Set or clear a sandboxed v3 motion expression on an animatable property.',inputSchema:mut({compositionId:str,layerId:str,path:str,expression:anyObject,clear:boolean},['compositionId','layerId','path'])},
+ {name:'add_motion_behavior',description:'Add a typed deterministic behavior to an animatable v3 motion property.',inputSchema:mut({compositionId:str,layerId:str,path:str,behavior:anyObject},['compositionId','layerId','path','behavior'])},
+ {name:'reorder_motion_behaviors',description:'Reorder all behaviors on an animatable v3 property deterministically.',inputSchema:mut({compositionId:str,layerId:str,path:str,behaviorIds:ids},['compositionId','layerId','path','behaviorIds'])},
+ {name:'set_text_style',description:'Apply typed style fields to a native v3 text layer.',inputSchema:mut({compositionId:str,layerId:str,style:anyObject},['compositionId','layerId','style'])},
+ {name:'set_text_selector',description:'Create or replace a typed selector on a native v3 text layer.',inputSchema:mut({compositionId:str,layerId:str,selector:anyObject},['compositionId','layerId','selector'])},
+ {name:'set_layout_constraints',description:'Replace responsive layout constraints on a native v3 motion layer.',inputSchema:mut({compositionId:str,layerId:str,constraints:anyArray},['compositionId','layerId','constraints'])},
+ {name:'add_mask',description:'Add a typed native v3 mask to an unlocked motion layer.',inputSchema:mut({compositionId:str,layerId:str,mask:anyObject},['compositionId','layerId','mask'])},
+ {name:'set_mask',description:'Replace an existing typed native v3 mask.',inputSchema:mut({compositionId:str,layerId:str,mask:anyObject},['compositionId','layerId','mask'])},
+ {name:'set_matte',description:'Set or clear a native v3 layer matte relationship.',inputSchema:mut({compositionId:str,layerId:str,matte:anyObject,clear:boolean},['compositionId','layerId'])},
+ {name:'set_camera',description:'Set native v3 camera properties on a camera layer.',inputSchema:mut({compositionId:str,layerId:str,camera:anyObject},['compositionId','layerId','camera'])},
+ {name:'add_shared_transition',description:'Add a typed v3 shared transition to a motion composition.',inputSchema:mut({compositionId:str,transition:anyObject},['compositionId','transition'])},
+ {name:'remove_shared_transition',description:'Remove a v3 shared transition by identifier.',inputSchema:mut({compositionId:str,transitionId:str},['compositionId','transitionId'])},
+ {name:'set_compositing_graph',description:'Set or clear the native v3 compositing graph for a motion composition.',inputSchema:mut({compositionId:str,graph:anyObject,clear:boolean},['compositionId'])},
+ {name:'create_motion_rig',description:'Create a typed v3 published-control motion rig.',inputSchema:mut({rig:anyObject},['rig'])},
+ {name:'remove_motion_rig',description:'Remove an unreferenced v3 motion rig.',inputSchema:mut({rigId:str},['rigId'])},
+ {name:'set_rig_control',description:'Set the typed default value of a published v3 rig control.',inputSchema:mut({rigId:str,controlId:str,value:{}},['rigId','controlId','value'])},
+ {name:'bind_rig_control',description:'Bind a published v3 rig control to an animatable layer property.',inputSchema:mut({rigId:str,binding:anyObject},['rigId','binding'])},
+ {name:'set_responsive_variant',description:'Create or replace a v3 responsive layout variant for a motion composition.',inputSchema:mut({compositionId:str,variant:anyObject},['compositionId','variant'])},
+ {name:'attach_tracking_data',description:'Attach typed tracking evidence to the canonical v3 project.',inputSchema:mut({record:anyObject},['record'])},
+ {name:'analyze_audio',description:'Attach deterministic audio-analysis evidence to the canonical v3 project.',inputSchema:mut({analysis:anyObject},['analysis'])},
+ {name:'set_motion_style',description:'Create or replace a reusable v3 motion style definition.',inputSchema:mut({style:anyObject},['style'])},
+ {name:'undo',description:'Undo the latest v3 session edit using revision conflict protection.',inputSchema:mut({},[])},
+ {name:'redo',description:'Redo the latest undone v3 session edit using revision conflict protection.',inputSchema:mut({},[])},
+ {name:'render_final_v3',description:'Render a native v3 motion composition with the v0.4 native render pipeline.',inputSchema:object({output:str,compositionId:str,backend:{type:'string',enum:['cpu','gpu','auto']}},['output','compositionId'])},
+ {name:'get_render_diagnostics_v3',description:'Compile and validate a v3 render program without mutating canonical project state.',inputSchema:object({compositionId:str},['compositionId'])},
 ];
