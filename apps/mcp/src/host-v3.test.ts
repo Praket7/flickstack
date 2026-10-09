@@ -39,9 +39,9 @@ test('v3 host enforces locks and property paths and supports undo/redo',async()=
  assert.equal(host.project.motionCompositions[0].layers[0].opacity.baseValue,.4);
  const undo:any=await host.call('undo',{expectedRevision:host.revision});assert.equal(undo.ok,true);assert.equal(host.project.motionCompositions[0].layers[0].opacity.baseValue,1);
  const redo:any=await host.call('redo',{expectedRevision:host.revision});assert.equal(redo.ok,true);assert.equal(host.project.motionCompositions[0].layers[0].opacity.baseValue,.4);
+ await assert.rejects(()=>host.call('set_motion_property',{expectedRevision:host.revision,compositionId:'mc',layerId:'title',path:'__proto__.x',value:1}),/property path/i);
  await host.call('set_layer_metadata',{expectedRevision:host.revision,compositionId:'mc',layerId:'title',locked:true});
  await assert.rejects(()=>host.call('set_motion_property',{expectedRevision:host.revision,compositionId:'mc',layerId:'title',path:'opacity',value:.2}),/locked/i);
- await assert.rejects(()=>host.call('set_motion_property',{expectedRevision:host.revision,compositionId:'mc',layerId:'title',path:'__proto__.x',value:1}),/property path/i);
 });
 
 test('v3 diagnostics compile a native render program without mutating revision',async()=>{
