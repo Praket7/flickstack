@@ -15,9 +15,36 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feature/flicksmith-v0.4-professional-motion-engine
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.88.0
         with:
           components: rustfmt
+      - name: Repair legacy parser literals
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          replacements = {
+              'crates/flick-render-cli/src/scene_bridge.rs': [('.max(.1)', '.max(0.1)')],
+              'crates/flick-render-core/tests/glyph_instances.rs': [
+                  ('0.,.5]', '0.,0.5]'),
+                  ('0.,.2]', '0.,0.2]'),
+                  ('opacity:.5', 'opacity:0.5'),
+              ],
+              'crates/flick-render-cpu/src/effects.rs': [('/65535.-.5', '/65535.0-0.5')],
+              'crates/flick-render-cpu/tests/camera_masks.rs': [('near:.1', 'near:0.1')],
+              'crates/flick-render-wgpu/src/lib.rs': [('+.5', '+0.5')],
+          }
+          for name, pairs in replacements.items():
+              path = Path(name)
+              text = path.read_text()
+              original = text
+              for old, new in pairs:
+                  text = text.replace(old, new)
+              if text != original:
+                  path.write_text(text)
+          PY
       - name: Run rustfmt and capture diagnostics
         id: fmt
         shell: bash
@@ -37,7 +64,7 @@ jobs:
             rustfmt-output.txt
             rustfmt-status.txt
             rustfmt.patch
-      - name: Commit formatted Rust source
+      - name: Commit repaired and formatted Rust source
         if: steps.fmt.outputs.exit == '0'
         shell: bash
         run: |
@@ -49,7 +76,7 @@ jobs:
           git config user.name 'Praket7'
           git config user.email '149203433+Praket7@users.noreply.github.com'
           git add -u
-          git commit -m 'style: rustfmt v0.4 native source'
+          git commit -m 'style: repair and rustfmt v0.4 native source'
           git push origin HEAD:feature/flicksmith-v0.4-professional-motion-engine
       - name: Fail on rustfmt parser error
         if: steps.fmt.outputs.exit != '0'
