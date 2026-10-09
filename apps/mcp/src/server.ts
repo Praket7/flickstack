@@ -16,7 +16,8 @@ function emptyProject(name='FlickSmith Project'):FlickProject{return{version:1,i
 
 type AnyProject=FlickProject|FlickProjectV2|FlickProjectV3;
 export interface RpcToolHost { call(name:string,args:unknown):Promise<unknown>; close?():void }
-export function runtimeForProject(project:AnyProject,options:{projectPath?:string;permittedRoots?:string[]}={}):{host:RpcToolHost;catalog:McpTool[]} {
+export interface RpcRuntime {host:RpcToolHost;catalog:McpTool[]}
+export function runtimeForProject(project:AnyProject,options:{projectPath?:string;permittedRoots?:string[]}={}):RpcRuntime {
  if(project.version===3)return{host:new V3FlickSmithHost({project,projectPath:options.projectPath,permittedRoots:options.permittedRoots}),catalog:v3ToolCatalog};
  if(project.version===2)return{host:new V2FlickSmithHost({project,projectPath:options.projectPath,permittedRoots:options.permittedRoots}),catalog:v2ToolCatalog};
  return{host:new FlickSmithHost({project,projectPath:options.projectPath,permittedRoots:options.permittedRoots}),catalog:toolCatalog};
@@ -29,17 +30,20 @@ const runtime=runtimeForProject(project,{projectPath:configuredProjectPath,permi
 export const host=runtime.host;
 export const activeToolCatalog=runtime.catalog;
 
-export async function handleRpc(req:any):Promise<any>{
- const id=req?.id;
- if(req?.method==='initialize') return {jsonrpc:'2.0',id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}},serverInfo:{name:'flicksmith',version:'0.5.0-dev'}}};
- if(req?.method==='notifications/initialized') return null;
- if(req?.method==='tools/list') return {jsonrpc:'2.0',id,result:{tools:activeToolCatalog}};
- if(req?.method==='tools/call'){
-  try{const result=await host.call(String(req.params?.name??''),req.params?.arguments??{});return{jsonrpc:'2.0',id,result:{content:[{type:'text',text:JSON.stringify(result,null,2)}],structuredContent:result}};}
-  catch(error){return{jsonrpc:'2.0',id,result:{isError:true,content:[{type:'text',text:error instanceof Error?error.message:String(error)}]}};}
- }
- return {jsonrpc:'2.0',id,error:{code:-32601,message:'Method not found'}};
+export function createRpcHandler(selected:RpcRuntime):(req:any)=>Promise<any>{
+ return async(req:any):Promise<any>=>{
+  const id=req?.id;
+  if(req?.method==='initialize') return {jsonrpc:'2.0',id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}},serverInfo:{name:'flicksmith',version:'0.5.0-dev'}}};
+  if(req?.method==='notifications/initialized') return null;
+  if(req?.method==='tools/list') return {jsonrpc:'2.0',id,result:{tools:selected.catalog}};
+  if(req?.method==='tools/call'){
+   try{const result=await selected.host.call(String(req.params?.name??''),req.params?.arguments??{});return{jsonrpc:'2.0',id,result:{content:[{type:'text',text:JSON.stringify(result,null,2)}],structuredContent:result}};}
+   catch(error){return{jsonrpc:'2.0',id,result:{isError:true,content:[{type:'text',text:error instanceof Error?error.message:String(error)}]}};}
+  }
+  return {jsonrpc:'2.0',id,error:{code:-32601,message:'Method not found'}};
+ };
 }
+export const handleRpc=createRpcHandler(runtime);
 
 export function isLoopbackHost(host:string):boolean {
  return host==='127.0.0.1'||host==='::1'||host==='[::1]'||host==='localhost';
