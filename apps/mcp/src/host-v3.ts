@@ -1,0 +1,104 @@
+import { resolve } from 'node:path';
+import type {
+  AudioAnalysisRecord, CameraDefinition, FlickProjectV3, LayoutConstraint, LayoutVariantRule,
+  MotionBehaviorInstance, MotionCompositingGraph, MotionComposition, MotionExpression, MotionKeyframe,
+  MotionLayer, MotionMaskDefinition, MotionMatte, MotionRigBinding, MotionRigDefinition, MotionStyleDefinition,
+  SharedTransition, TextSelector, TextStyle, TrackingRecord,
+} from '../../../packages/schema/src/v3/project.ts';
+import { serializeProjectV3 } from '../../../packages/schema/src/v3/parse.ts';
+import { V3ProjectSession, type V3EditOperation } from '../../../packages/timeline/src/v3.ts';
+import { validatePermittedPath } from '../../../packages/timeline/src/path-policy.ts';
+import { AtomicProjectWrite } from '../../../packages/desktop-runtime/src/index.ts';
+import { compileRenderProgram } from '../../../packages/render-ir/src/compile.ts';
+import type { RenderGraph } from '../../../packages/render-graph/src/types.ts';
+import { renderNativeProgram, type NativeRenderBackend } from '../../../packages/render-gpu-native/src/bridge.ts';
+
+export interface V3FlickSmithHostOptions {
+  project:FlickProjectV3;
+  projectPath?:string;
+  permittedRoots?:string[];
+}
+function record(value:unknown):Record<string,unknown>{return value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{};}
+function str(value:unknown,name:string):string{if(typeof value!=='string'||!value.trim())throw new Error(`${name} must be a non-empty string`);return value;}
+function num(value:unknown,name:string):number{if(typeof value!=='number'||!Number.isFinite(value))throw new Error(`${name} must be finite`);return value;}
+function int(value:unknown,name:string):number{const v=num(value,name);if(!Number.isInteger(v)||v<0)throw new Error(`${name} must be a non-negative integer`);return v;}
+function bool(value:unknown,name:string):boolean{if(typeof value!=='boolean')throw new Error(`${name} must be boolean`);return value;}
+function obj<T>(value:unknown,name:string):T{if(!value||typeof value!=='object'||Array.isArray(value))throw new Error(`${name} must be an object`);return structuredClone(value as T);}
+function arr<T>(value:unknown,name:string):T[]{if(!Array.isArray(value))throw new Error(`${name} must be an array`);return structuredClone(value as T[]);}
+function requiredUnknown(args:Record<string,unknown>,key:string):unknown{if(!Object.prototype.hasOwnProperty.call(args,key))throw new Error(`${key} is required`);return structuredClone(args[key]);}
+function directGraph(project:FlickProjectV3,compositionId:string):RenderGraph{
+ const c=project.motionCompositions.find(x=>x.id===compositionId);if(!c)throw new Error(`Unknown motion composition ${compositionId}`);
+ const output=`output:${compositionId}`;
+ return{compositionId,nodes:[{id:output,kind:'output',range:{start:0,end:c.duration},upstream:[],params:{width:c.width,height:c.height}}],outputNodeId:output};
+}
+
+export class V3FlickSmithHost {
+  #session:V3ProjectSession;
+  #projectPath?:string;
+  #roots:string[];
+  constructor(options:V3FlickSmithHostOptions){
+    this.#session=new V3ProjectSession(options.project);
+    this.#projectPath=options.projectPath;
+    this.#roots=(options.permittedRoots??[process.cwd()]).map(x=>resolve(x));
+  }
+  get project():FlickProjectV3{return this.#session.project;}
+  get revision():string{return this.#session.revision;}
+  close():void{}
+  #persist():void{if(!this.#projectPath)return;const w=AtomicProjectWrite.prepare(this.#projectPath,serializeProjectV3(this.#session.project));w.commit();}
+  #apply(expectedRevision:unknown,operation:V3EditOperation){
+    const expected=str(expectedRevision,'expectedRevision');const result=this.#session.apply(expected,operation);if(result.ok)this.#persist();
+    return result.ok?{...result,revision:this.#session.revision}:result;
+  }
+  #undoRedo(kind:'undo'|'redo',expectedRevision:unknown){
+    const expected=str(expectedRevision,'expectedRevision');const result=this.#session[kind](expected);if(result.ok)this.#persist();
+    return result.ok?{...result,project:this.#session.project}:result;
+  }
+  async call(name:string,rawArgs:unknown):Promise<unknown>{
+    const args=record(rawArgs),intent=typeof args.intent==='string'?args.intent:undefined;
+    switch(name){
+      case 'get_timeline':return{project:this.#session.project,revision:this.#session.revision};
+      case 'create_motion_composition':return this.#apply(args.expectedRevision,{type:'create_motion_composition',composition:obj<MotionComposition>(args.composition,'composition'),intent});
+      case 'add_motion_layer':return this.#apply(args.expectedRevision,{type:'add_motion_layer',compositionId:str(args.compositionId,'compositionId'),layer:obj<MotionLayer>(args.layer,'layer'),intent});
+      case 'remove_motion_layer':return this.#apply(args.expectedRevision,{type:'remove_motion_layer',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),intent});
+      case 'set_layer_metadata':return this.#apply(args.expectedRevision,{type:'set_layer_metadata',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),...(args.name!==undefined?{name:str(args.name,'name')}:{}),...(args.locked!==undefined?{locked:bool(args.locked,'locked')}:{}),...(args.enabled!==undefined?{enabled:bool(args.enabled,'enabled')}:{}),...(args.zIndex!==undefined?{zIndex:num(args.zIndex,'zIndex')}:{}),intent});
+      case 'set_layer_timing':return this.#apply(args.expectedRevision,{type:'set_layer_timing',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),start:int(args.start,'start'),duration:int(args.duration,'duration'),intent});
+      case 'reparent_motion_layer':return this.#apply(args.expectedRevision,{type:'reparent_motion_layer',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),parentId:args.parentId===undefined?undefined:str(args.parentId,'parentId'),intent});
+      case 'set_motion_property':return this.#apply(args.expectedRevision,{type:'set_motion_property',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),path:str(args.path,'path'),value:requiredUnknown(args,'value'),intent});
+      case 'set_motion_keyframes':return this.#apply(args.expectedRevision,{type:'set_motion_keyframes',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),path:str(args.path,'path'),keyframes:arr<MotionKeyframe<unknown>>(args.keyframes,'keyframes'),intent});
+      case 'set_motion_expression':return this.#apply(args.expectedRevision,{type:'set_motion_expression',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),path:str(args.path,'path'),expression:args.clear===true||args.expression===undefined?undefined:obj<MotionExpression>(args.expression,'expression'),intent});
+      case 'add_motion_behavior':return this.#apply(args.expectedRevision,{type:'add_motion_behavior',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),path:str(args.path,'path'),behavior:obj<MotionBehaviorInstance>(args.behavior,'behavior'),intent});
+      case 'reorder_motion_behaviors':return this.#apply(args.expectedRevision,{type:'reorder_motion_behaviors',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),path:str(args.path,'path'),behaviorIds:arr<string>(args.behaviorIds,'behaviorIds'),intent});
+      case 'set_text_style':return this.#apply(args.expectedRevision,{type:'set_text_style',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),style:obj<Partial<TextStyle>>(args.style,'style'),intent});
+      case 'set_text_selector':return this.#apply(args.expectedRevision,{type:'set_text_selector',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),selector:obj<TextSelector>(args.selector,'selector'),intent});
+      case 'set_layout_constraints':return this.#apply(args.expectedRevision,{type:'set_layout_constraints',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),constraints:arr<LayoutConstraint>(args.constraints,'constraints'),intent});
+      case 'add_mask':return this.#apply(args.expectedRevision,{type:'add_mask',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),mask:obj<MotionMaskDefinition>(args.mask,'mask'),intent});
+      case 'set_mask':return this.#apply(args.expectedRevision,{type:'set_mask',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),mask:obj<MotionMaskDefinition>(args.mask,'mask'),intent});
+      case 'set_matte':return this.#apply(args.expectedRevision,{type:'set_matte',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),matte:args.clear===true||args.matte===undefined?undefined:obj<MotionMatte>(args.matte,'matte'),intent});
+      case 'set_camera':return this.#apply(args.expectedRevision,{type:'set_camera',compositionId:str(args.compositionId,'compositionId'),layerId:str(args.layerId,'layerId'),camera:obj<CameraDefinition>(args.camera,'camera'),intent});
+      case 'add_shared_transition':return this.#apply(args.expectedRevision,{type:'add_shared_transition',compositionId:str(args.compositionId,'compositionId'),transition:obj<SharedTransition>(args.transition,'transition'),intent});
+      case 'remove_shared_transition':return this.#apply(args.expectedRevision,{type:'remove_shared_transition',compositionId:str(args.compositionId,'compositionId'),transitionId:str(args.transitionId,'transitionId'),intent});
+      case 'set_compositing_graph':return this.#apply(args.expectedRevision,{type:'set_motion_graph',compositionId:str(args.compositionId,'compositionId'),graph:args.clear===true||args.graph===undefined?undefined:obj<MotionCompositingGraph>(args.graph,'graph'),intent});
+      case 'create_motion_rig':return this.#apply(args.expectedRevision,{type:'create_motion_rig',rig:obj<MotionRigDefinition>(args.rig,'rig'),intent});
+      case 'remove_motion_rig':return this.#apply(args.expectedRevision,{type:'remove_motion_rig',rigId:str(args.rigId,'rigId'),intent});
+      case 'set_rig_control':return this.#apply(args.expectedRevision,{type:'set_rig_control',rigId:str(args.rigId,'rigId'),controlId:str(args.controlId,'controlId'),value:requiredUnknown(args,'value'),intent});
+      case 'bind_rig_control':return this.#apply(args.expectedRevision,{type:'bind_rig_control',rigId:str(args.rigId,'rigId'),binding:obj<MotionRigBinding>(args.binding,'binding'),intent});
+      case 'set_responsive_variant':return this.#apply(args.expectedRevision,{type:'set_responsive_variant',compositionId:str(args.compositionId,'compositionId'),variant:obj<LayoutVariantRule>(args.variant,'variant'),intent});
+      case 'attach_tracking_data':return this.#apply(args.expectedRevision,{type:'attach_tracking_data',record:obj<TrackingRecord>(args.record,'record'),intent});
+      case 'analyze_audio':return this.#apply(args.expectedRevision,{type:'analyze_audio',analysis:obj<AudioAnalysisRecord>(args.analysis,'analysis'),intent});
+      case 'set_motion_style':return this.#apply(args.expectedRevision,{type:'set_motion_style',style:obj<MotionStyleDefinition>(args.style,'style'),intent});
+      case 'undo':return this.#undoRedo('undo',args.expectedRevision);
+      case 'redo':return this.#undoRedo('redo',args.expectedRevision);
+      case 'render_final_v3':{
+        const output=str(args.output,'output'),compositionId=str(args.compositionId,'compositionId');validatePermittedPath(output,this.#roots);
+        const backend=(args.backend??'auto') as NativeRenderBackend;if(!['cpu','gpu','auto'].includes(backend))throw new Error('backend must be cpu, gpu, or auto');
+        const program=compileRenderProgram(this.#session.project,directGraph(this.#session.project,compositionId),{compositionId});
+        return{output:renderNativeProgram({program,output,backend}),revision:this.#session.revision,compositionId};
+      }
+      case 'get_render_diagnostics_v3':{
+        const compositionId=str(args.compositionId,'compositionId'),program=compileRenderProgram(this.#session.project,directGraph(this.#session.project,compositionId),{compositionId});
+        return{renderer:'native-v04',projectVersion:3,compositionId,layerCount:program.layers.length,nodeCount:program.graph.nodes.length,surface:program.surface,limits:program.limits,errors:[],warnings:[]};
+      }
+      default:throw new Error(`Unknown FlickSmith v3 tool: ${name}`);
+    }
+  }
+}
