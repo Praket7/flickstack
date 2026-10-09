@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat bootstrap/payload-{000..022} | base64 --decode > /tmp/flicksmith.bundle
+          cat bootstrap/payload-{000..022} > /tmp/flicksmith.bundle
           ACTUAL="$(sha256sum /tmp/flicksmith.bundle | awk '{print $1}')"
           echo "bundle_sha256=$ACTUAL" >> "$GITHUB_STEP_SUMMARY"
           echo "bundle_bytes=$(wc -c < /tmp/flicksmith.bundle)" >> "$GITHUB_STEP_SUMMARY"
