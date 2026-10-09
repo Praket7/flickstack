@@ -18,16 +18,31 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Restore verified FlickSmith refs
+      - name: Reconstruct verified FlickSmith v0.2 and v0.3 trees
         shell: bash
         run: |
           set -euo pipefail
-          cat bootstrap/final-* | base64 --decode > /tmp/flicksmith.bundle
-          test "$(sha256sum /tmp/flicksmith.bundle | awk '{print $1}')" = "172e42853c25c81e5992d8a8bfe3d4494824c33f7cd89fea7e371918915e4de9"
-          git fetch /tmp/flicksmith.bundle \
-            refs/heads/publish-main:refs/remotes/bundle/publish-main \
-            refs/heads/feature/flicksmith-v0.3-motion-architecture:refs/remotes/bundle/feature/flicksmith-v0.3-motion-architecture
-          test "$(git rev-parse refs/remotes/bundle/publish-main)" = "b450f3ccc2614b0863d3197aad3dcf9275d048e2"
-          test "$(git rev-parse refs/remotes/bundle/feature/flicksmith-v0.3-motion-architecture)" = "2049df5a093e2e5aaa857340a2e3f7c1353d2879"
-          git push --force origin refs/remotes/bundle/publish-main:refs/heads/main
-          git push origin refs/remotes/bundle/feature/flicksmith-v0.3-motion-architecture:refs/heads/feature/flicksmith-v0.3-motion-architecture
+          cat bootstrap/baseline-* | base64 --decode > /tmp/flicksmith-v02.tar.xz
+          cat bootstrap/delta-* | base64 --decode > /tmp/flicksmith-v03.patch.xz
+          test "$(sha256sum /tmp/flicksmith-v02.tar.xz | awk '{print $1}')" = "0937e55bfc3a3d017d96499a6de04fb4a6dec0b1e207de70ff9feb317a8fd9e5"
+          test "$(sha256sum /tmp/flicksmith-v03.patch.xz | awk '{print $1}')" = "b60098d475bf28f0aa63515e395e9de7f3859185f4d609524a4c42e2638ed57d"
+
+          git config user.name "Praket7"
+          git config user.email "149203433+Praket7@users.noreply.github.com"
+
+          git checkout --orphan flicksmith-v02-import
+          git rm -rf .
+          tar -xJf /tmp/flicksmith-v02.tar.xz -C .
+          git add -A
+          test "$(git write-tree)" = "7ab880b6962447a6ffeeba45f4e6c422de8fcea1"
+          git commit -m "chore: import verified FlickSmith v0.2 baseline"
+          BASE_SHA="$(git rev-parse HEAD)"
+
+          git checkout -b feature/flicksmith-v0.3-motion-architecture
+          xz -dc /tmp/flicksmith-v03.patch.xz | git apply --index --binary
+          test "$(git write-tree)" = "4f5beb4ead171167282c22d07c25384b4090c600"
+          git commit -m "feat: implement FlickSmith v0.3 professional motion architecture"
+          FEATURE_SHA="$(git rev-parse HEAD)"
+
+          git push --force origin "$BASE_SHA:refs/heads/main"
+          git push --force origin "$FEATURE_SHA:refs/heads/feature/flicksmith-v0.3-motion-architecture"
