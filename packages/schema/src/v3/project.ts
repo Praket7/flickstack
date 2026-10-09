@@ -58,8 +58,8 @@ export interface MotionStyleDefinition { id:string; name:string; durationFrames?
 
 export type GenerationKind='image'|'image-edit'|'layer-decomposition'|'inpaint'|'depth'|'video'|'audio';
 export interface GenerationRecord { id:string; kind:GenerationKind; provider:string; model:string; prompt?:string; inputAssetIds:string[]; outputAssetIds:string[]; parameters:Record<string,unknown>; seed?:number|string; requestHash:string; usage?:{units?:number;costUsd?:number}; rights?:{commercialAllowed?:boolean|null;attributionRequired?:boolean;policy?:string}; createdAt:string }
-export interface GeneratedSceneLayer { id:string; assetId:string; name:string; z:number; bounds:{x:number;y:number;width:number;height:number}; confidence?:number; depthRange?:readonly[number,number]; meshAssetId?:string }
-export interface LayeredImageScene { id:string; sourceAssetId:string; layerAssetIds:string[]; depthAssetId?:string; cleanPlateAssetId?:string; decompositionProvider:string; layers:GeneratedSceneLayer[]; diagnostics:string[] }
+export interface GeneratedSceneLayer { id:string; assetId:string; name:string; z:number; bounds:{x:number;y:number;width:number;height:number}; confidence?:number; depthRange?:readonly[number,number]; meshAssetId?:string; maskAssetId?:string }
+export interface LayeredImageScene { id:string; sourceAssetId:string; layerAssetIds:string[]; depthAssetId?:string; cleanPlateAssetId?:string; cleanPlateAssetIds?:string[]; decompositionProvider:string; layers:GeneratedSceneLayer[]; diagnostics:string[] }
 
 export type FlickProjectV3=Omit<FlickProjectV2,'version'>&{version:3;motionCompositions:MotionComposition[];motionComponents:MotionComponentDefinition[];motionRigs:MotionRigDefinition[];audioAnalyses?:AudioAnalysisRecord[];motionStyles:MotionStyleDefinition[];trackingData?:TrackingRecord[];generationRecords?:GenerationRecord[];generatedScenes?:LayeredImageScene[];layoutTokens?:Record<string,unknown>;motionTokens?:Record<string,unknown>;typographyTokens?:Record<string,unknown>;legacyMetadata?:Record<string,unknown>};
 export const animated=<T>(baseValue:T):AnimatedProperty<T>=>({baseValue});
