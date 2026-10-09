@@ -6,8 +6,11 @@ export class ProgramMonitorController {private readonly renderer:PreviewRenderer
 export interface RepairIssueLike{id:string;startFrame:number;endFrame:number;message:string;suggestion:string}
 export class RepairController {static plan(issue:RepairIssueLike){return{branchName:`repair/${issue.id}`,range:{startFrame:issue.startFrame,endFrame:issue.endFrame},intent:`Repair ${issue.id}: ${issue.message}`,issueId:issue.id,suggestedAction:issue.suggestion};}}
 
-import type { CameraDefinition, LayoutConstraint, MotionBehaviorInstance, MotionExpression, MotionKeyframe, MotionMaskDefinition, MotionCompositingGraph } from '../../../packages/schema/src/v3/project.ts';
+import type { CameraDefinition, LayoutConstraint, MotionBehaviorInstance, MotionExpression, MotionKeyframe, MotionMaskDefinition, MotionCompositingGraph, LayeredImageScene } from '../../../packages/schema/src/v3/project.ts';
 import { V3ProjectSession, type V3EditOperation, type V3SessionApplyResult } from '../../../packages/timeline/src/v3.ts';
+import type { ProviderCapabilityManifest } from '../../../packages/generation/src/types.ts';
+import { buildGeneratedSceneOperations,buildNativeMotionOperations,planGeneratedScene,planNativeSceneMotion,type CameraSafetyEnvelope,type GeneratedSceneRequest,type LayerDepthPlacement } from '../../../packages/generated-scenes/src/index.ts';
+import { reviewGeneratedScene,type GeneratedSceneQcIssue } from '../../../packages/design-qc/src/generated-scene.ts';
 export class StudioMotionController {
  private readonly session:V3ProjectSession;
  constructor(session:V3ProjectSession){this.session=session;}
@@ -21,10 +24,23 @@ export class StudioMotionController {
  setLayerMetadata(expectedRevision:string,compositionId:string,layerId:string,metadata:{name?:string;locked?:boolean;enabled?:boolean;zIndex?:number}){return this.commit(expectedRevision,{type:'set_layer_metadata',compositionId,layerId,...metadata,intent:'Studio layer metadata'});}
  setLayerTiming(expectedRevision:string,compositionId:string,layerId:string,start:number,duration:number){return this.commit(expectedRevision,{type:'set_layer_timing',compositionId,layerId,start,duration,intent:'Studio layer timing'});}
  reparentLayer(expectedRevision:string,compositionId:string,layerId:string,parentId?:string){return this.commit(expectedRevision,{type:'reparent_motion_layer',compositionId,layerId,parentId,intent:'Studio layer reparent'});}
-
  setCompositingGraph(expectedRevision:string,compositionId:string,graph?:MotionCompositingGraph){return this.commit(expectedRevision,{type:'set_motion_graph',compositionId,graph,intent:'Studio compositing graph edit'});}
  setMask(expectedRevision:string,compositionId:string,layerId:string,mask:MotionMaskDefinition){return this.commit(expectedRevision,{type:'set_mask',compositionId,layerId,mask,intent:'Studio direct mask edit'});}
  setCamera(expectedRevision:string,compositionId:string,layerId:string,camera:CameraDefinition){return this.commit(expectedRevision,{type:'set_camera',compositionId,layerId,camera,intent:'Studio direct camera edit'});}
  undo(expectedRevision:string){return this.session.undo(expectedRevision);}
  redo(expectedRevision:string){return this.session.redo(expectedRevision);}
+}
+
+export class GeneratedSceneController {
+ private readonly session:V3ProjectSession;private readonly manifests:ProviderCapabilityManifest[];
+ constructor(session:V3ProjectSession,manifests:ProviderCapabilityManifest[]){this.session=session;this.manifests=structuredClone(manifests);}
+ plan(request:GeneratedSceneRequest){return planGeneratedScene(this.session.project,request,this.manifests);}
+ private applyTransaction(expectedRevision:string,ops:V3EditOperation[]):V3SessionApplyResult{
+  if(!ops.length)throw new Error('Generated-scene transaction contains no operations');
+  const staged=new V3ProjectSession(this.session.project);let stagedRevision=expectedRevision;for(const op of ops){const r=staged.apply(stagedRevision,op);if(!r.ok)return r;stagedRevision=r.result.diff.afterRevision}
+  let revision=expectedRevision,last:V3SessionApplyResult|undefined;for(const op of ops){last=this.session.apply(revision,op);if(!last.ok)return last;revision=last.result.diff.afterRevision}return last!;
+ }
+ build(expectedRevision:string,request:GeneratedSceneRequest,scene:LayeredImageScene,placements:LayerDepthPlacement[],envelope:CameraSafetyEnvelope):V3SessionApplyResult{return this.applyTransaction(expectedRevision,buildGeneratedSceneOperations(this.session.project,scene,request,placements,envelope));}
+ animate(expectedRevision:string,sceneId:string,request:GeneratedSceneRequest,envelope:CameraSafetyEnvelope):{applied:number;revision:string}{if(expectedRevision!==this.session.revision)throw new Error('Project changed; refresh and retry');const scene=this.session.project.generatedScenes?.find(s=>s.id===sceneId);if(!scene)throw new Error(`Unknown generated scene ${sceneId}`);const plan=planNativeSceneMotion(request,scene,envelope),ops=buildNativeMotionOperations(request.compositionId,scene,plan,request.durationFrames);if(!ops.length)return{applied:0,revision:this.session.revision};const result=this.applyTransaction(expectedRevision,ops);if(!result.ok)throw new Error(result.conflict.message);return{applied:ops.length,revision:this.session.revision};}
+ review(sceneId:string):GeneratedSceneQcIssue[]{return reviewGeneratedScene(this.session.project,sceneId);}
 }
