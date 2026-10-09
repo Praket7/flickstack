@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "fixture": "tests/fixtures/v04-premium-ui-film.flick.json",
+  "purpose": "Brand-neutral native/editable premium motion acceptance film",
+  "durationSeconds": 48,
+  "fps": 30,
+  "surface": {"width": 1920, "height": 1080},
+  "responsiveVariants": ["landscape", "portrait"],
+  "editableVisualProvenance": 1.0,
+  "flattenedGeneratedVisualAssets": 0,
+  "requiredCapabilities": {
+    "kineticTypography": true,
+    "proceduralReplication": true,
+    "particles": true,
+    "sharedTransitions": true,
+    "camera2_5d": true,
+    "compositingGraph": true,
+    "audioReactiveMotion": true,
+    "responsiveLayout": true
+  },
+  "syntheticMotionQc": {
+    "blockingIssues": 0,
+    "minimumMeanOccupancy": 0.45,
+    "minimumActivePairRatio": 0.5,
+    "minimumEndCardResolvedFrames": 45,
+    "resolvedEndCardFrames": 60,
+    "independentMotionGroupsPerNonEndShot": 3
+  },
+  "nativeRenderer": {
+    "semanticSceneBridge": "implemented",
+    "cpuReference": "implemented",
+    "gpuComposition": "implemented-source",
+    "gpuPrimitiveRasterization": "hybrid-cpu-raster-gpu-composite",
+    "ffmpegVisualCompositingV3": false,
+    "localRustCompile": "blocked-no-rust-toolchain",
+    "hardwareGpuParity": "pending-ci-hardware"
+  },
+  "notes": [
+    "The acceptance project contains no generated PNG, HTML screenshot, or pre-rendered visual scene proxy.",
+    "GPU composition is real device work; vector/text raster staging currently uses the deterministic CPU reference rasterizer per primitive layer before GPU blend/composition.",
+    "Hardware throughput and CPU/GPU image-error metrics are not claimed until a verified GPU adapter run is available."
+  ]
+}

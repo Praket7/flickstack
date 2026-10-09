@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('Director workspace exposes timecoded motion QC and jump-to-frame/layer actions',()=>{const source=readFileSync(new URL('./DirectorWorkspace.tsx',import.meta.url),'utf8');for(const token of ['Motion QC','jump','startFrame','layerIds','static_motion_ratio','dead_space'])assert.match(source,new RegExp(token,'i'));assert.match(source,/onJump/);});

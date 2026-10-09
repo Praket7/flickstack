@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { DecodeScheduler, FrameCache, buildFramePlan, blendRgba, webGpuShaderSource } from '../src/index.ts';
+import type { RenderGraph } from '../../render-graph/src/index.ts';
+
+test('decode scheduler prioritizes playhead and cancels stale generations',()=>{const s=new DecodeScheduler();s.enqueue({key:'thumb',priority:'thumbnail',generation:1});s.enqueue({key:'future',priority:'near-future',generation:1});s.enqueue({key:'play',priority:'playhead',generation:1});assert.equal(s.take()?.key,'play');s.cancelBeforeGeneration(2);assert.equal(s.take(),undefined);});
+test('frame cache is byte bounded true LRU',()=>{const c=new FrameCache(8);c.set('a',new Uint8Array(4));c.set('b',new Uint8Array(4));assert.ok(c.get('a'));c.set('c',new Uint8Array(4));assert.ok(c.get('a'));assert.equal(c.get('b'),undefined);});
+test('frame plan uses visible graph layers and CPU blend math is deterministic',()=>{const g:RenderGraph={compositionId:'root',outputNodeId:'output:root',nodes:[{id:'a',kind:'visual-source',range:{start:0,end:10},upstream:[],params:{opacity:1}},{id:'b',kind:'visual-source',range:{start:5,end:20},upstream:[],params:{opacity:.5}},{id:'output:root',kind:'output',range:{start:0,end:20},upstream:['a','b'],params:{width:1,height:1}}]};assert.deepEqual(buildFramePlan(g,7).map(x=>x.nodeId),['a','b']);const out=blendRgba(new Uint8Array([255,0,0,255]),new Uint8Array([0,0,255,255]),.5);assert.ok(out[0]>=126&&out[2]>=126);assert.match(webGpuShaderSource,/textureSample/);});

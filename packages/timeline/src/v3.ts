@@ -1,0 +1,115 @@
+import { createHash } from 'node:crypto';
+import { assertNoCredentialFields } from '../../schema/src/secrets.ts';
+import { parseProjectV3 } from '../../schema/src/v3/parse.ts';
+import type {
+  AnimatedProperty, AudioAnalysisRecord, CameraDefinition, FlickProjectV3, LayoutConstraint, LayoutVariantRule,
+  MotionBehaviorInstance, MotionCompositingGraph, MotionComposition, MotionExpression,
+  MotionKeyframe, MotionLayer, MotionMaskDefinition, MotionMatte, MotionRigBinding, MotionRigDefinition,
+  MotionStyleDefinition, SharedTransition, TextSelector, TextStyle, TrackingRecord,
+} from '../../schema/src/v3/project.ts';
+
+export type V3EditOperation =
+ | {type:'create_motion_composition'; composition:MotionComposition; intent?:string}
+ | {type:'add_motion_layer'; compositionId:string; layer:MotionLayer; intent?:string}
+ | {type:'remove_motion_layer'; compositionId:string; layerId:string; intent?:string}
+ | {type:'set_layer_metadata'; compositionId:string; layerId:string; name?:string; locked?:boolean; enabled?:boolean; zIndex?:number; intent?:string}
+ | {type:'set_layer_timing'; compositionId:string; layerId:string; start:number; duration:number; intent?:string}
+ | {type:'reparent_motion_layer'; compositionId:string; layerId:string; parentId?:string; intent?:string}
+ | {type:'set_motion_property'; compositionId:string; layerId:string; path:string; value:unknown; intent?:string}
+ | {type:'set_motion_keyframes'; compositionId:string; layerId:string; path:string; keyframes:MotionKeyframe<unknown>[]; intent?:string}
+ | {type:'set_motion_expression'; compositionId:string; layerId:string; path:string; expression?:MotionExpression; intent?:string}
+ | {type:'add_motion_behavior'; compositionId:string; layerId:string; path:string; behavior:MotionBehaviorInstance; intent?:string}
+ | {type:'reorder_motion_behaviors'; compositionId:string; layerId:string; path:string; behaviorIds:string[]; intent?:string}
+ | {type:'set_text_style'; compositionId:string; layerId:string; style:Partial<TextStyle>; intent?:string}
+ | {type:'set_text_selector'; compositionId:string; layerId:string; selector:TextSelector; intent?:string}
+ | {type:'set_layout_constraints'; compositionId:string; layerId:string; constraints:LayoutConstraint[]; intent?:string}
+ | {type:'add_mask'; compositionId:string; layerId:string; mask:MotionMaskDefinition; intent?:string}
+ | {type:'set_mask'; compositionId:string; layerId:string; mask:MotionMaskDefinition; intent?:string}
+ | {type:'set_matte'; compositionId:string; layerId:string; matte?:MotionMatte; intent?:string}
+ | {type:'set_camera'; compositionId:string; layerId:string; camera:CameraDefinition; intent?:string}
+ | {type:'add_shared_transition'; compositionId:string; transition:SharedTransition; intent?:string}
+ | {type:'remove_shared_transition'; compositionId:string; transitionId:string; intent?:string}
+ | {type:'set_motion_graph'; compositionId:string; graph?:MotionCompositingGraph; intent?:string}
+ | {type:'create_motion_rig'; rig:MotionRigDefinition; intent?:string}
+ | {type:'remove_motion_rig'; rigId:string; intent?:string}
+ | {type:'set_rig_control'; rigId:string; controlId:string; value:unknown; intent?:string}
+ | {type:'bind_rig_control'; rigId:string; binding:MotionRigBinding; intent?:string}
+ | {type:'set_responsive_variant'; compositionId:string; variant:LayoutVariantRule; intent?:string}
+ | {type:'attach_tracking_data'; record:TrackingRecord; intent?:string}
+ | {type:'analyze_audio'; analysis:AudioAnalysisRecord; intent?:string}
+ | {type:'set_motion_style'; style:MotionStyleDefinition; intent?:string};
+
+export interface V3AffectedRange { compositionId:string; start:number; end:number }
+export interface V3Receipt { operation:V3EditOperation['type']; intent?:string; checkpointId:string; affectedIds:string[]; affectedRanges:V3AffectedRange[] }
+export interface V3EditResult { project:FlickProjectV3; checkpointId:string; receipt:V3Receipt; diff:{beforeRevision:string;afterRevision:string;affectedIds:string[];affectedRanges:V3AffectedRange[]}; warnings:string[] }
+
+export function projectRevisionV3(project:FlickProjectV3):string {
+  return createHash('sha256').update(JSON.stringify(project)).digest('hex').slice(0,16);
+}
+function checkpoint(project:FlickProjectV3,op:V3EditOperation):string{return 'cp_'+createHash('sha256').update(JSON.stringify([project.id,project.checkpoints.length,op])).digest('hex').slice(0,12);}
+function composition(project:FlickProjectV3,id:string):MotionComposition {const c=project.motionCompositions.find(x=>x.id===id);if(!c)throw new Error(`Unknown motion composition ${id}`);return c;}
+function anyLayer(c:MotionComposition,id:string):MotionLayer {const l=c.layers.find(x=>x.id===id);if(!l)throw new Error(`Unknown motion layer ${id}`);return l;}
+function layer(c:MotionComposition,id:string):MotionLayer {const l=anyLayer(c,id);if(l.locked)throw new Error(`Motion layer ${id} is locked`);return l;}
+function rangeFor(c:MotionComposition,l?:MotionLayer):V3AffectedRange{return{compositionId:c.id,start:l?.start??0,end:l?l.start+l.duration:c.duration};}
+function own(obj:unknown,key:string):unknown {if(!obj||typeof obj!=='object'||Array.isArray(obj)||key==='__proto__'||key==='prototype'||key==='constructor')throw new Error(`Invalid motion property path segment ${key}`);return (obj as Record<string,unknown>)[key];}
+function animatedAt(l:MotionLayer,path:string):AnimatedProperty<unknown> {
+  if(!/^[A-Za-z][A-Za-z0-9]*(\.[A-Za-z][A-Za-z0-9]*)*$/.test(path))throw new Error('Invalid motion property path');
+  let cur:unknown=l;for(const key of path.split('.'))cur=own(cur,key);
+  if(!cur||typeof cur!=='object'||Array.isArray(cur)||!Object.prototype.hasOwnProperty.call(cur,'baseValue'))throw new Error(`Property ${path} is not animatable`);
+  return cur as AnimatedProperty<unknown>;
+}
+function assertUnreferenced(c:MotionComposition,id:string):void {
+  for(const l of c.layers){if(l.parentId===id||l.matte?.sourceLayerId===id)throw new Error(`Layer ${id} is referenced by ${l.id}`);}
+  if(c.cameraId===id)throw new Error(`Layer ${id} is the active camera`);
+  for(const t of c.sharedTransitions??[])for(const b of t.bindings??[])if(b.sourceLayerId===id||b.destinationLayerId===id)throw new Error(`Layer ${id} is referenced by transition ${t.id}`);
+}
+function upsertById<T extends {id:string}>(values:T[],value:T):void {const i=values.findIndex(v=>v.id===value.id);if(i>=0)values[i]=structuredClone(value);else values.push(structuredClone(value));}
+
+export function applyV3Operation(input:FlickProjectV3,op:V3EditOperation):V3EditResult {
+  assertNoCredentialFields(op,'editOperation');
+  const beforeRevision=projectRevisionV3(input),p=structuredClone(input),affectedIds:string[]=[],affectedRanges:V3AffectedRange[]=[];
+  const touch=(c:MotionComposition,l?:MotionLayer,...ids:string[])=>{affectedIds.push(c.id,...ids);if(l)affectedIds.push(l.id);affectedRanges.push(rangeFor(c,l));};
+  switch(op.type){
+    case 'create_motion_composition':{if(p.motionCompositions.some(c=>c.id===op.composition.id))throw new Error(`Duplicate motion composition ${op.composition.id}`);p.motionCompositions.push(structuredClone(op.composition));touch(op.composition,undefined);break;}
+    case 'add_motion_layer':{const c=composition(p,op.compositionId);if(c.layers.some(l=>l.id===op.layer.id))throw new Error(`Duplicate motion layer ${op.layer.id}`);c.layers.push(structuredClone(op.layer));touch(c,op.layer);break;}
+    case 'remove_motion_layer':{const c=composition(p,op.compositionId),l=layer(c,op.layerId);assertUnreferenced(c,l.id);c.layers.splice(c.layers.indexOf(l),1);touch(c,l);break;}
+    case 'set_layer_metadata':{const c=composition(p,op.compositionId),l=anyLayer(c,op.layerId);if(l.locked&&op.locked!==false)throw new Error(`Motion layer ${l.id} is locked`);if(op.name!==undefined){const name=op.name.trim();if(!name||name.length>256)throw new Error('Layer name must be 1..256 characters');l.name=name;}if(op.locked!==undefined)l.locked=op.locked;if(op.enabled!==undefined)l.enabled=op.enabled;if(op.zIndex!==undefined){if(!Number.isInteger(op.zIndex)||Math.abs(op.zIndex)>1_000_000)throw new Error('Invalid zIndex');l.zIndex=op.zIndex;}touch(c,l);break;}
+    case 'set_layer_timing':{const c=composition(p,op.compositionId),l=layer(c,op.layerId);if(!Number.isInteger(op.start)||!Number.isInteger(op.duration)||op.start<0||op.duration<=0||op.start+op.duration>c.duration)throw new Error('Invalid layer timing');l.start=op.start;l.duration=op.duration;touch(c,l);break;}
+    case 'reparent_motion_layer':{const c=composition(p,op.compositionId),l=layer(c,op.layerId);if(op.parentId){const parent=layer(c,op.parentId);if(parent.id===l.id)throw new Error('parent cycle');let cur:MotionLayer|undefined=parent;const by=new Map(c.layers.map(x=>[x.id,x]));while(cur?.parentId){if(cur.parentId===l.id)throw new Error('parent cycle');cur=by.get(cur.parentId);}}l.parentId=op.parentId;touch(c,l,...(op.parentId?[op.parentId]:[]));break;}
+    case 'set_motion_property':{const c=composition(p,op.compositionId),l=layer(c,op.layerId),a=animatedAt(l,op.path);a.baseValue=structuredClone(op.value);touch(c,l);break;}
+    case 'set_motion_keyframes':{const c=composition(p,op.compositionId),l=layer(c,op.layerId),a=animatedAt(l,op.path);a.keyframes=structuredClone(op.keyframes);touch(c,l);break;}
+    case 'set_motion_expression':{const c=composition(p,op.compositionId),l=layer(c,op.layerId),a=animatedAt(l,op.path);if(op.expression)a.expression=structuredClone(op.expression);else delete a.expression;touch(c,l);break;}
+    case 'add_motion_behavior':{const c=composition(p,op.compositionId),l=layer(c,op.layerId),a=animatedAt(l,op.path);a.behaviors??=[];if(a.behaviors.some(b=>b.id===op.behavior.id))throw new Error(`Duplicate behavior ${op.behavior.id}`);a.behaviors.push(structuredClone(op.behavior));touch(c,l,op.behavior.id);break;}
+    case 'reorder_motion_behaviors':{const c=composition(p,op.compositionId),l=layer(c,op.layerId),a=animatedAt(l,op.path),behaviors=a.behaviors??[];if(op.behaviorIds.length!==behaviors.length||new Set(op.behaviorIds).size!==behaviors.length)throw new Error('behaviorIds must contain every behavior exactly once');const by=new Map(behaviors.map(b=>[b.id,b]));if(op.behaviorIds.some(id=>!by.has(id)))throw new Error('Unknown behavior id');a.behaviors=op.behaviorIds.map(id=>by.get(id)!);touch(c,l,...op.behaviorIds);break;}
+    case 'set_text_style':{const c=composition(p,op.compositionId),l=layer(c,op.layerId);if(l.kind!=='text')throw new Error('Text style requires a text layer');l.textStyle={...(l.textStyle??{fontSize:{baseValue:48}}),...structuredClone(op.style)};touch(c,l);break;}
+    case 'set_text_selector':{const c=composition(p,op.compositionId),l=layer(c,op.layerId);if(l.kind!=='text')throw new Error('Text selector requires a text layer');l.textSelectors??=[];upsertById(l.textSelectors,op.selector);touch(c,l,op.selector.id);break;}
+    case 'set_layout_constraints':{const c=composition(p,op.compositionId),l=layer(c,op.layerId);l.layout=structuredClone(op.constraints);touch(c,l);break;}
+    case 'add_mask':{const c=composition(p,op.compositionId),l=layer(c,op.layerId);if(l.masks.some(m=>m.id===op.mask.id))throw new Error(`Duplicate mask ${op.mask.id}`);l.masks.push(structuredClone(op.mask));touch(c,l,op.mask.id);break;}
+    case 'set_mask':{const c=composition(p,op.compositionId),l=layer(c,op.layerId),i=l.masks.findIndex(m=>m.id===op.mask.id);if(i<0)throw new Error(`Unknown mask ${op.mask.id}`);l.masks[i]=structuredClone(op.mask);touch(c,l,op.mask.id);break;}
+    case 'set_matte':{const c=composition(p,op.compositionId),l=layer(c,op.layerId);l.matte=op.matte?structuredClone(op.matte):undefined;touch(c,l,...(op.matte?[op.matte.sourceLayerId]:[]));break;}
+    case 'set_camera':{const c=composition(p,op.compositionId),l=layer(c,op.layerId);if(l.kind!=='camera')throw new Error('Camera properties require a camera layer');l.camera=structuredClone(op.camera);touch(c,l);break;}
+    case 'add_shared_transition':{const c=composition(p,op.compositionId);c.sharedTransitions??=[];if(c.sharedTransitions.some(t=>t.id===op.transition.id))throw new Error(`Duplicate transition ${op.transition.id}`);c.sharedTransitions.push(structuredClone(op.transition));affectedIds.push(c.id,op.transition.id);affectedRanges.push({compositionId:c.id,start:op.transition.start,end:op.transition.start+op.transition.duration});break;}
+    case 'remove_shared_transition':{const c=composition(p,op.compositionId),transitions=c.sharedTransitions??[],i=transitions.findIndex(t=>t.id===op.transitionId);if(i<0)throw new Error(`Unknown transition ${op.transitionId}`);const [removed]=transitions.splice(i,1);c.sharedTransitions=transitions;affectedIds.push(c.id,removed.id);affectedRanges.push({compositionId:c.id,start:removed.start,end:removed.start+removed.duration});break;}
+    case 'set_motion_graph':{const c=composition(p,op.compositionId);c.compositingGraph=op.graph?structuredClone(op.graph):undefined;touch(c,undefined,'compositing-graph');break;}
+    case 'create_motion_rig':{if(p.motionRigs.some(r=>r.id===op.rig.id))throw new Error(`Duplicate motion rig ${op.rig.id}`);p.motionRigs.push(structuredClone(op.rig));affectedIds.push(op.rig.id);break;}
+    case 'remove_motion_rig':{const i=p.motionRigs.findIndex(r=>r.id===op.rigId);if(i<0)throw new Error(`Unknown motion rig ${op.rigId}`);const usedByComposition=p.motionCompositions.find(c=>c.rigId===op.rigId),usedByComponent=p.motionComponents.find(c=>c.rigId===op.rigId||c.composition.rigId===op.rigId);if(usedByComposition||usedByComponent)throw new Error(`Motion rig ${op.rigId} is referenced`);p.motionRigs.splice(i,1);affectedIds.push(op.rigId);break;}
+    case 'set_rig_control':{const r=p.motionRigs.find(r=>r.id===op.rigId);if(!r)throw new Error(`Unknown motion rig ${op.rigId}`);const control=r.controls.find(c=>c.id===op.controlId);if(!control)throw new Error(`Unknown rig control ${op.controlId}`);control.defaultValue=structuredClone(op.value);affectedIds.push(r.id,control.id);break;}
+    case 'bind_rig_control':{const r=p.motionRigs.find(r=>r.id===op.rigId);if(!r)throw new Error(`Unknown motion rig ${op.rigId}`);if(!r.controls.some(c=>c.id===op.binding.controlId))throw new Error(`Unknown rig control ${op.binding.controlId}`);const candidates=p.motionCompositions.filter(c=>c.rigId===r.id&&c.layers.some(l=>l.id===op.binding.layerId));if(candidates.length===0)throw new Error(`Unknown rig layer ${op.binding.layerId} for ${r.id}`);if(candidates.length>1)throw new Error(`Ambiguous rig layer ${op.binding.layerId} for ${r.id}`);const c=candidates[0],target=layer(c,op.binding.layerId);animatedAt(target,op.binding.propertyPath);if(r.bindings.some(b=>b.controlId===op.binding.controlId&&b.layerId===op.binding.layerId&&b.propertyPath===op.binding.propertyPath))throw new Error('Duplicate rig binding');r.bindings.push(structuredClone(op.binding));affectedIds.push(r.id,op.binding.controlId,op.binding.layerId);affectedRanges.push(rangeFor(c,target));break;}
+    case 'set_responsive_variant':{const c=composition(p,op.compositionId),layerIds=new Set(c.layers.map(l=>l.id));for(const id of Object.keys(op.variant.constraintsByLayer))if(!layerIds.has(id))throw new Error(`Responsive variant references missing layer ${id}`);c.layoutVariants??=[];const i=c.layoutVariants.findIndex(v=>v.aspect===op.variant.aspect);if(i>=0)c.layoutVariants[i]=structuredClone(op.variant);else c.layoutVariants.push(structuredClone(op.variant));touch(c,undefined,`variant:${op.variant.aspect}`);break;}
+    case 'attach_tracking_data':{p.trackingData??=[];upsertById(p.trackingData,op.record);affectedIds.push(op.record.id);break;}
+    case 'analyze_audio':{p.audioAnalyses??=[];upsertById(p.audioAnalyses,op.analysis);affectedIds.push(op.analysis.id,op.analysis.assetId);break;}
+    case 'set_motion_style':{upsertById(p.motionStyles,op.style);affectedIds.push(op.style.id);break;}
+  }
+  const validated=parseProjectV3(p),checkpointId=checkpoint(input,op);validated.checkpoints.push({id:checkpointId,createdAt:new Date().toISOString(),parentId:input.checkpoints.at(-1)?.id,intent:op.intent});
+  const ids=[...new Set(affectedIds)],ranges=affectedRanges.filter((r,i,a)=>a.findIndex(x=>x.compositionId===r.compositionId&&x.start===r.start&&x.end===r.end)===i);
+  const afterRevision=projectRevisionV3(validated);
+  return{project:validated,checkpointId,receipt:{operation:op.type,intent:op.intent,checkpointId,affectedIds:ids,affectedRanges:ranges},diff:{beforeRevision,afterRevision,affectedIds:ids,affectedRanges:ranges},warnings:[]};
+}
+export type V3SessionApplyResult={ok:true;result:V3EditResult}|{ok:false;conflict:{expectedRevision:string;currentRevision:string;message:string}};
+export class V3ProjectSession {
+  project:FlickProjectV3;revision:string;private undoStack:FlickProjectV3[]=[];private redoStack:FlickProjectV3[]=[];
+  constructor(project:FlickProjectV3){this.project=parseProjectV3(structuredClone(project));this.revision=projectRevisionV3(this.project);}
+  apply(expectedRevision:string,op:V3EditOperation):V3SessionApplyResult {if(expectedRevision!==this.revision)return{ok:false,conflict:{expectedRevision,currentRevision:this.revision,message:'Project changed; refresh and retry'}};const before=structuredClone(this.project),result=applyV3Operation(this.project,op);this.undoStack.push(before);if(this.undoStack.length>200)this.undoStack.shift();this.redoStack=[];this.project=result.project;this.revision=result.diff.afterRevision;return{ok:true,result};}
+  undo(expectedRevision:string):{ok:true;revision:string}|{ok:false;conflict:{expectedRevision:string;currentRevision:string;message:string}}{if(expectedRevision!==this.revision)return{ok:false,conflict:{expectedRevision,currentRevision:this.revision,message:'Project changed; refresh and retry'}};const prev=this.undoStack.pop();if(!prev)return{ok:true,revision:this.revision};this.redoStack.push(structuredClone(this.project));this.project=parseProjectV3(prev);this.revision=projectRevisionV3(this.project);return{ok:true,revision:this.revision};}
+  redo(expectedRevision:string):{ok:true;revision:string}|{ok:false;conflict:{expectedRevision:string;currentRevision:string;message:string}}{if(expectedRevision!==this.revision)return{ok:false,conflict:{expectedRevision,currentRevision:this.revision,message:'Project changed; refresh and retry'}};const next=this.redoStack.pop();if(!next)return{ok:true,revision:this.revision};this.undoStack.push(structuredClone(this.project));this.project=parseProjectV3(next);this.revision=projectRevisionV3(this.project);return{ok:true,revision:this.revision};}
+}

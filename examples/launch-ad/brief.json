@@ -1,0 +1,9 @@
+{
+  "id": "launch-ad",
+  "title": "15-second FlickSmith launch ad",
+  "beats": [
+    {"id":"hook","role":"hook","query":"strongest founder hook","required":true},
+    {"id":"proof","role":"proof","query":"product proof detail","required":true},
+    {"id":"cta","role":"cta","query":"call to action screen","required":true}
+  ]
+}

@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('Motion workspace mounts direct Viewer authoring surface',()=>{const src=readFileSync('apps/studio/src/workspaces/MotionWorkspace.tsx','utf8');for(const token of ['<Viewer','onTransformCommit','onMaskCommit','onCameraCommit'])assert.match(src,new RegExp(token));});
+test('Viewer exposes transform mask camera and safe-area overlays',()=>{const src=readFileSync('apps/studio/src/panels/Viewer.tsx','utf8');for(const token of ['TransformGizmo','MaskOverlay','CameraOverlay','safe-area'])assert.match(src,new RegExp(token));});

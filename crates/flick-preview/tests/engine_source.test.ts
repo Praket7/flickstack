@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+test('native preview owns program renderer rather than uploading full-frame textures per layer',()=>{const src=fs.readFileSync(new URL('../src/lib.rs',import.meta.url),'utf8');assert.match(src,/load_program/);assert.match(src,/GpuRenderer/);assert.doesNotMatch(src,/pixels=vec!\[0u8;\(width/);assert.doesNotMatch(src,/full-frame-per-layer/);});

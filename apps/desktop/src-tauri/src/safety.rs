@@ -1,0 +1,7 @@
+use std::{fs::{File,OpenOptions},io::{self,Write},path::{Path,PathBuf}};
+pub struct ProjectLock{path:PathBuf,_file:File}
+impl ProjectLock{pub fn acquire(project:&Path)->io::Result<Self>{let path=PathBuf::from(format!("{}.lock",project.display()));let mut f=OpenOptions::new().write(true).create_new(true).open(&path)?;writeln!(f,"pid={}",std::process::id())?;f.sync_all()?;Ok(Self{path,_file:f})}}
+impl Drop for ProjectLock{fn drop(&mut self){let _=std::fs::remove_file(&self.path);}}
+pub fn atomic_write(path:&Path,data:&[u8])->io::Result<()> {let dir=path.parent().unwrap_or_else(||Path::new("."));let tmp=dir.join(format!(".{}.flicksmith-tmp-{}",path.file_name().unwrap_or_default().to_string_lossy(),std::process::id()));{let mut f=OpenOptions::new().write(true).create(true).truncate(true).open(&tmp)?;f.write_all(data)?;f.sync_all()?;}replace(&tmp,path)?;if let Ok(d)=File::open(dir){let _=d.sync_all();}Ok(())}
+#[cfg(not(windows))]fn replace(from:&Path,to:&Path)->io::Result<()>{std::fs::rename(from,to)}
+#[cfg(windows)]fn replace(from:&Path,to:&Path)->io::Result<()>{use std::os::windows::ffi::OsStrExt;use windows_sys::Win32::Storage::FileSystem::{MoveFileExW,MOVEFILE_REPLACE_EXISTING,MOVEFILE_WRITE_THROUGH};let mut f:Vec<u16>=from.as_os_str().encode_wide().chain(Some(0)).collect();let mut t:Vec<u16>=to.as_os_str().encode_wide().chain(Some(0)).collect();let ok=unsafe{MoveFileExW(f.as_mut_ptr(),t.as_mut_ptr(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)};if ok==0{Err(io::Error::last_os_error())}else{Ok(())}}

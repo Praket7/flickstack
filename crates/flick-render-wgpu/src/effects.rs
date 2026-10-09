@@ -1,0 +1,2 @@
+use flick_render_core::{Effect,EffectBackend};
+pub fn backend(effect:&Effect)->EffectBackend{match effect{Effect::GaussianBlur{..}|Effect::DirectionalBlur{..}|Effect::DropShadow{..}|Effect::InnerShadow{..}|Effect::Glow{..}|Effect::ColorMatrix{..}|Effect::Sharpen{..}|Effect::Grain{..}|Effect::Vignette{..}|Effect::Displacement{..}|Effect::ChromaticSeparation{..}|Effect::LightSweep{..}=>EffectBackend::Gpu}}

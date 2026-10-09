@@ -1,0 +1,50 @@
+name: Desktop Build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['apps/desktop/**','crates/**','.github/workflows/desktop-build.yml']
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            name: macos
+          - os: windows-latest
+            name: windows
+          - os: ubuntu-22.04
+            name: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Linux system dependencies
+        if: matrix.name == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf ffmpeg
+      - name: macOS FFmpeg
+        if: matrix.name == 'macos'
+        run: brew install ffmpeg
+      - name: Windows FFmpeg
+        if: matrix.name == 'windows'
+        run: choco install ffmpeg -y
+      - run: node --experimental-strip-types apps/desktop/build.ts
+      - run: cargo install tauri-cli --version '^2' --locked
+      - name: Build Tauri bundles
+        working-directory: apps/desktop
+        run: cargo tauri build
+      - name: Smoke desktop binary (macOS/Linux)
+        if: matrix.name != 'windows'
+        run: node --experimental-strip-types scripts/smoke-desktop-package.ts package-smoke.json apps/desktop/src-tauri/target/release/flicksmith-desktop
+      - name: Smoke desktop binary (Windows)
+        if: matrix.name == 'windows'
+        run: node --experimental-strip-types scripts/smoke-desktop-package.ts package-smoke.json apps/desktop/src-tauri/target/release/flicksmith-desktop.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flicksmith-${{ matrix.name }}
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/**
+            package-smoke.json
