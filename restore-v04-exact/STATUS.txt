@@ -4,21 +4,16 @@ SIZE=290316
 SHA=e20d844cb4083eda67035f2b0b4385154a75e58aeeb49ea822c7a95c11b3c219
 TAR_EXIT=0
 TREE=90dc5dae850fcdac0c73906d0354ef596a2cccf4
-RM_EXIT=1
+RM_EXIT=0
 COMMIT_EXIT=0
-PUSH_EXIT=999
+PUSH_EXIT=0
 --- /tmp/rm.log ---
-error: the following files have changes staged in the index:
-    .github/workflows/ci.yml
-    .github/workflows/desktop-build.yml
-    .github/workflows/native-v04.yml
-(use --cached to keep the file, or -f to force removal)
+rm '.github/workflows/ci.yml'
+rm '.github/workflows/desktop-build.yml'
+rm '.github/workflows/native-v04.yml'
 --- /tmp/commit.log ---
-[master (root-commit) dc086e8] feat: FlickSmith v0.4 professional motion engine
- 378 files changed, 31466 insertions(+)
- create mode 100644 .github/workflows/ci.yml
- create mode 100644 .github/workflows/desktop-build.yml
- create mode 100644 .github/workflows/native-v04.yml
+[master (root-commit) 826e1b2] feat: FlickSmith v0.4 professional motion engine
+ 375 files changed, 31305 insertions(+)
  create mode 100644 .gitignore
  create mode 100644 AGENTS.md
  create mode 100644 CHANGELOG.md
@@ -394,3 +389,10 @@ error: the following files have changes staged in the index:
  create mode 100644 tests/security/motion-v03.test.ts
  create mode 100644 tests/security/tool-surface.test.ts
  create mode 100644 tsconfig.json
+--- /tmp/push.log ---
+remote: 
+remote: Create a pull request for 'feature/flicksmith-v0.4-professional-motion-engine' on GitHub by visiting:        
+remote:      https://github.com/Praket7/flickstack/pull/new/feature/flicksmith-v0.4-professional-motion-engine        
+remote: 
+To https://github.com/Praket7/flickstack.git
+ * [new branch]      HEAD -> feature/flicksmith-v0.4-professional-motion-engine
