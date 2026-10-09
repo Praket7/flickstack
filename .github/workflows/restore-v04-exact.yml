@@ -45,7 +45,7 @@ jobs:
             git config user.email "149203433+Praket7@users.noreply.github.com"
             git add -A
             TREE=$(git write-tree)
-            git rm .github/workflows/ci.yml .github/workflows/desktop-build.yml .github/workflows/native-v04.yml >/tmp/rm.log 2>&1
+            git rm --cached .github/workflows/ci.yml .github/workflows/desktop-build.yml .github/workflows/native-v04.yml >/tmp/rm.log 2>&1
             RM_EXIT=$?
             git commit -m "feat: FlickSmith v0.4 professional motion engine" >/tmp/commit.log 2>&1
             COMMIT_EXIT=$?
