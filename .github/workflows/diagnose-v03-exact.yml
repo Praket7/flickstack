@@ -1,0 +1,54 @@
+name: Diagnose verified v0.3 bundle
+
+on:
+  push:
+    branches: [diagnose-v03-exact-restore]
+    paths:
+      - 'diag-v03/READY'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout payload branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct exact bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat \
+            bootstrap/payload-000 bootstrap/payload-001 bootstrap/payload-002 bootstrap/payload-003 bootstrap/payload-004 \
+            bootstrap/payload-005 bootstrap/payload-006 bootstrap/payload-007 bootstrap/payload-008 bootstrap/payload-009 \
+            bootstrap/payload-010 bootstrap/payload-011 bootstrap/payload-012 bootstrap/payload-013 bootstrap/payload-014 \
+            bootstrap/payload-015 bootstrap/payload-016 bootstrap/payload-017 bootstrap/payload-018 bootstrap/payload-019 \
+            bootstrap/payload-020 bootstrap/payload-021 bootstrap/payload-022 \
+            | base64 --decode > /tmp/flicksmith.bundle
+          test "$(sha256sum /tmp/flicksmith.bundle | awk '{print $1}')" = "172e42853c25c81e5992d8a8bfe3d4494824c33f7cd89fea7e371918915e4de9"
+
+      - name: Verify Git bundle
+        run: git bundle verify /tmp/flicksmith.bundle
+
+      - name: Fetch exact refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch /tmp/flicksmith.bundle \
+            refs/heads/publish-main:refs/remotes/bundle/publish-main \
+            refs/heads/feature/flicksmith-v0.3-motion-architecture:refs/remotes/bundle/feature-v03
+
+      - name: Assert v0.2 ref
+        run: test "$(git rev-parse refs/remotes/bundle/publish-main)" = "b450f3ccc2614b0863d3197aad3dcf9275d048e2"
+
+      - name: Assert v0.3 ref and tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse refs/remotes/bundle/feature-v03)" = "2049df5a093e2e5aaa857340a2e3f7c1353d2879"
+          test "$(git rev-parse refs/remotes/bundle/feature-v03^{tree})" = "4f5beb4ead171167282c22d07c25384b4090c600"
