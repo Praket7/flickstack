@@ -1,0 +1,20 @@
+name: Verify frozen v0.3 payload
+
+on:
+  push:
+    branches:
+      - bootstrap-v04-from-verified-v03
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact v0.3 bundle payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat bootstrap/payload-* | base64 --decode > /tmp/flicksmith-v03.bundle
+          echo "sha=$(sha256sum /tmp/flicksmith-v03.bundle | awk '{print $1}')"
+          test "$(sha256sum /tmp/flicksmith-v03.bundle | awk '{print $1}')" = "172e42853c25c81e5992d8a8bfe3d4494824c33f7cd89fea7e371918915e4de9"
+          git bundle verify /tmp/flicksmith-v03.bundle
