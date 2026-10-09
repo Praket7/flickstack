@@ -29,6 +29,6 @@ jobs:
           fi
           git config user.name 'Praket7'
           git config user.email '149203433+Praket7@users.noreply.github.com'
-          git add '*.rs' ':/**.rs'
+          git add -u
           git commit -m 'style: rustfmt v0.4 native source'
           git push origin HEAD:feature/flicksmith-v0.4-professional-motion-engine
