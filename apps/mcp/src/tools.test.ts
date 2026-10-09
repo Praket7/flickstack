@@ -31,6 +31,7 @@ test('every canonical-project mutating v3 tool requires expectedRevision and exp
  const nonProjectMutating=new Set([
   'get_timeline','render_final_v3','get_render_diagnostics_v3',
   'list_generation_providers','generate_asset','get_generation_job','cancel_generation','discard_generation',
+  'plan_generated_scene','review_generated_scene','regenerate_scene_layer',
  ]);
  for(const tool of v3ToolCatalog){
   assert.ok(tool.inputSchema);
