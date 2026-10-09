@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import type { AudioAnalysisRecord,CameraDefinition,FlickProjectV3,LayoutConstraint,LayoutVariantRule,MotionBehaviorInstance,MotionCompositingGraph,MotionComposition,MotionExpression,MotionKeyframe,MotionLayer,MotionMaskDefinition,MotionMatte,MotionRigBinding,MotionRigDefinition,MotionStyleDefinition,SharedTransition,TextSelector,TextStyle,TrackingRecord } from '../../../packages/schema/src/v3/project.ts';
+import type { AudioAnalysisRecord,CameraDefinition,FlickProjectV3,LayeredImageScene,LayoutConstraint,LayoutVariantRule,MotionBehaviorInstance,MotionCompositingGraph,MotionComposition,MotionExpression,MotionKeyframe,MotionLayer,MotionMaskDefinition,MotionMatte,MotionRigBinding,MotionRigDefinition,MotionStyleDefinition,SharedTransition,TextSelector,TextStyle,TrackingRecord } from '../../../packages/schema/src/v3/project.ts';
 import { serializeProjectV3 } from '../../../packages/schema/src/v3/parse.ts';
 import { V3ProjectSession,type V3EditOperation } from '../../../packages/timeline/src/v3.ts';
 import { validatePermittedPath } from '../../../packages/timeline/src/path-policy.ts';
@@ -8,9 +8,11 @@ import { compileRenderProgram } from '../../../packages/render-ir/src/compile.ts
 import type { RenderGraph } from '../../../packages/render-graph/src/types.ts';
 import { renderNativeProgram,type NativeRenderBackend } from '../../../packages/render-gpu-native/src/bridge.ts';
 import { buildGenerationAcceptance,GenerationRuntime,type GenerationRequest,type GenerationRequirements } from '../../../packages/generation/src/index.ts';
+import type { CameraSafetyEnvelope,GeneratedSceneRequest,LayerDepthPlacement } from '../../../packages/generated-scenes/src/index.ts';
+import { GeneratedSceneService } from './generated-scene-service.ts';
 
 export interface V3FlickSmithHostOptions{project:FlickProjectV3;projectPath?:string;permittedRoots?:string[];generation?:GenerationRuntime;generationAssetRoot?:string}
-function record(value:unknown):Record<string,unknown>{return value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{}}
+function record(value:unknown):Record<string,unknown>{return value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{} }
 function str(value:unknown,name:string):string{if(typeof value!=='string'||!value.trim())throw new Error(`${name} must be a non-empty string`);return value}
 function num(value:unknown,name:string):number{if(typeof value!=='number'||!Number.isFinite(value))throw new Error(`${name} must be finite`);return value}
 function int(value:unknown,name:string):number{const v=num(value,name);if(!Number.isInteger(v)||v<0)throw new Error(`${name} must be a non-negative integer`);return v}
@@ -27,6 +29,7 @@ export class V3FlickSmithHost{
  #apply(expectedRevision:unknown,operation:V3EditOperation){const expected=str(expectedRevision,'expectedRevision'),result=this.#session.apply(expected,operation);if(result.ok)this.#persist();return result.ok?{...result,revision:this.#session.revision}:result}
  #undoRedo(kind:'undo'|'redo',expectedRevision:unknown){const expected=str(expectedRevision,'expectedRevision'),result=this.#session[kind](expected);if(result.ok)this.#persist();return result.ok?{...result,project:this.#session.project}:result}
  #gen():GenerationRuntime{if(!this.#generation)throw new Error('Generation runtime unavailable');return this.#generation}
+ #generatedScenes():GeneratedSceneService{return new GeneratedSceneService(this.#session,this.#generation)}
  async call(name:string,rawArgs:unknown):Promise<unknown>{const args=record(rawArgs),intent=typeof args.intent==='string'?args.intent:undefined;switch(name){
   case'get_timeline':return{project:this.#session.project,revision:this.#session.revision};
   case'create_motion_composition':return this.#apply(args.expectedRevision,{type:'create_motion_composition',composition:obj<MotionComposition>(args.composition,'composition'),intent});
@@ -65,6 +68,11 @@ export class V3FlickSmithHost{
   case'accept_generation':{const expected=str(args.expectedRevision,'expectedRevision');if(expected!==this.revision)return{ok:false,conflict:{expectedRevision:expected,currentRevision:this.revision,message:'Project changed; refresh and retry'}};const jobId=str(args.jobId,'jobId'),runtime=this.#gen(),request=runtime.request(jobId),staged=runtime.staged(jobId);if(!request||!staged)throw new Error(`Generation job ${jobId} has no completed staged output`);const acceptance=buildGenerationAcceptance(request,staged,this.#generationAssetRoot),result=this.#apply(expected,{type:'accept_generation',assets:acceptance.assets,record:acceptance.record,intent});if((result as {ok?:boolean}).ok)runtime.discard(jobId);return result}
   case'discard_generation':{const jobId=str(args.jobId,'jobId');this.#gen().discard(jobId);return{jobId,discarded:true,revision:this.revision}}
   case'discard_generation_record':return this.#apply(args.expectedRevision,{type:'discard_generation_record',generationRecordId:str(args.generationRecordId,'generationRecordId'),intent});
+  case'plan_generated_scene':{const request=obj<GeneratedSceneRequest>(args.request,'request');return{plan:this.#generatedScenes().plan(request),revision:this.revision}}
+  case'build_generated_scene':{const service=this.#generatedScenes(),result=service.build(str(args.expectedRevision,'expectedRevision'),obj<GeneratedSceneRequest>(args.request,'request'),obj<LayeredImageScene>(args.scene,'scene'),arr<LayerDepthPlacement>(args.placements,'placements'),obj<CameraSafetyEnvelope>(args.envelope,'envelope'));if(result.ok)this.#persist();return result}
+  case'apply_generated_scene_motion':{const service=this.#generatedScenes(),result=service.animate(str(args.expectedRevision,'expectedRevision'),str(args.sceneId,'sceneId'),obj<GeneratedSceneRequest>(args.request,'request'),obj<CameraSafetyEnvelope>(args.envelope,'envelope'));if(result.ok&&result.applied>0)this.#persist();return result}
+  case'review_generated_scene':return{issues:this.#generatedScenes().review(str(args.sceneId,'sceneId')),revision:this.revision};
+  case'regenerate_scene_layer':{const request=obj<GenerationRequest>(args.request,'request'),requirements=args.requirements===undefined?undefined:obj<GenerationRequirements>(args.requirements,'requirements');return this.#generatedScenes().regenerate(str(args.sceneId,'sceneId'),str(args.layerId,'layerId'),request,requirements)}
   case'undo':return this.#undoRedo('undo',args.expectedRevision);case'redo':return this.#undoRedo('redo',args.expectedRevision);
   case'render_final_v3':{const output=str(args.output,'output'),compositionId=str(args.compositionId,'compositionId');validatePermittedPath(output,this.#roots);const backend=(args.backend??'auto') as NativeRenderBackend;if(!['cpu','gpu','auto'].includes(backend))throw new Error('backend must be cpu, gpu, or auto');const program=compileRenderProgram(this.#session.project,directGraph(this.#session.project,compositionId),{compositionId});return{output:renderNativeProgram({program,output,backend}),revision:this.#session.revision,compositionId}}
   case'get_render_diagnostics_v3':{const compositionId=str(args.compositionId,'compositionId'),program=compileRenderProgram(this.#session.project,directGraph(this.#session.project,compositionId),{compositionId});return{renderer:'native-v04',projectVersion:3,compositionId,layerCount:program.layers.length,nodeCount:program.graph.nodes.length,surface:program.surface,limits:program.limits,errors:[],warnings:[]}}
