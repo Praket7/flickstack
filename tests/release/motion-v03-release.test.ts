@@ -14,5 +14,5 @@ test('v0.3 release metadata and benchmark notes distinguish verified motion core
  assert.match(readme,/native OpenFX.*disabled|OpenFX.*disabled/is);assert.match(readme,/OCIO\/ACES.*non-stub|non-stub.*OCIO\/ACES/is);
  const desktopPkg=JSON.parse(readFileSync('apps/desktop/package.json','utf8')),tauri=JSON.parse(readFileSync('apps/desktop/src-tauri/tauri.conf.json','utf8')),manifest=JSON.parse(readFileSync('apps/desktop/package-manifest.json','utf8'));
  assert.equal(desktopPkg.version,'0.4.0');assert.equal(tauri.version,'0.4.0');assert.equal(manifest.version,'0.4.0');
- assert.match(readFileSync('apps/desktop/src-tauri/Cargo.toml','utf8'),/^version = \"0\.4\.0\"/m);assert.match(readFileSync('crates/flick-preview/Cargo.toml','utf8'),/^version = \"0\.4\.0\"/m);assert.match(readFileSync('apps/mcp/src/server.ts','utf8'),/version:'0\.4\.0'/);
+ assert.match(readFileSync('apps/desktop/src-tauri/Cargo.toml','utf8'),/^version = \"0\.4\.0\"/m);assert.match(readFileSync('crates/flick-preview/Cargo.toml','utf8'),/^version = \"0\.4\.0\"/m);assert.match(readFileSync('apps/mcp/src/server.ts','utf8'),/version:'0\.5\.0-dev'/);
 });
