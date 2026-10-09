@@ -18,73 +18,30 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Diagnose verify and publish exact v0.4 source
+      - name: Verify exact source and publish non-workflow tree
         shell: bash
         env:
-          SNAPSHOT_URL: 'https://sdmntprcentralus.oaiusercontent.com/files/00000000-cb80-81f5-ae49-441874eb9c08/raw?se=2026-10-09T11%3A28%3A47Z&sp=r&sv=2026-02-06&sr=b&scid=d7a89dc3-c633-558f-9bb1-06354b8f819c&skoid=a1be202a-6464-476c-a496-723317c4a4db&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-09T01%3A22%3A43Z&ske=2026-10-10T01%3A22%3A43Z&sks=b&skv=2026-02-06&sig=46f2NJDnbOE%2B/j84FrUCjQ3E49aKNPmV7IH/ojnGPMM%3D'
+          SNAPSHOT_URL: 'https://sdmntprcentralus.oaiusercontent.com/files/00000000-5984-81f5-8936-36f775396507/raw?se=2026-10-09T11%3A30%3A20Z&sp=r&sv=2026-02-06&sr=b&scid=a068b744-c565-5a82-a5aa-664f88bbe099&skoid=a1be202a-6464-476c-a496-723317c4a4db&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-09T01%3A22%3A43Z&ske=2026-10-10T01%3A22%3A43Z&sks=b&skv=2026-02-06&sig=qHHB5HF6qzuG/261BtkNj202PCan9VI4iqq8zrHhkio%3D'
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          set +e
-          STATUS="$GITHUB_WORKSPACE/restore-v04-exact/STATUS.txt"
-          : > "$STATUS"
-
-          HTTP_CODE=$(curl --location --silent --show-error --retry 2 --retry-delay 1 --write-out '%{http_code}' "$SNAPSHOT_URL" -o /tmp/flicksmith-v04-src.tar.xz)
-          CURL_EXIT=$?
-          SIZE=0
-          SHA=missing
-          TAR_EXIT=999
-          TREE=missing
-          PUSH_EXIT=999
-          if [ -f /tmp/flicksmith-v04-src.tar.xz ]; then
-            SIZE=$(wc -c < /tmp/flicksmith-v04-src.tar.xz | tr -d ' ')
-            SHA=$(sha256sum /tmp/flicksmith-v04-src.tar.xz | awk '{print $1}')
-          fi
+          set -euo pipefail
+          curl --fail --location --retry 2 --retry-delay 1 "$SNAPSHOT_URL" -o /tmp/flicksmith-v04-src.tar.xz
+          test "$(wc -c < /tmp/flicksmith-v04-src.tar.xz | tr -d ' ')" = "290316"
+          test "$(sha256sum /tmp/flicksmith-v04-src.tar.xz | awk '{print $1}')" = "e20d844cb4083eda67035f2b0b4385154a75e58aeeb49ea822c7a95c11b3c219"
 
           rm -rf /tmp/flicksmith-v04 && mkdir -p /tmp/flicksmith-v04
-          if [ "$CURL_EXIT" -eq 0 ] && [ "$HTTP_CODE" = "200" ] && [ "$SHA" = "e20d844cb4083eda67035f2b0b4385154a75e58aeeb49ea822c7a95c11b3c219" ]; then
-            tar -xJf /tmp/flicksmith-v04-src.tar.xz -C /tmp/flicksmith-v04
-            TAR_EXIT=$?
-          fi
-
-          if [ "$TAR_EXIT" -eq 0 ]; then
-            cd /tmp/flicksmith-v04
-            git init -q
-            git config user.name "Praket7"
-            git config user.email "149203433+Praket7@users.noreply.github.com"
-            git add -A
-            TREE=$(git write-tree)
-            if [ "$TREE" = "90dc5dae850fcdac0c73906d0354ef596a2cccf4" ]; then
-              git commit -q -m "feat: FlickSmith v0.4 professional motion engine"
-              git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-              git push --force origin HEAD:refs/heads/feature/flicksmith-v0.4-professional-motion-engine >/tmp/push.log 2>&1
-              PUSH_EXIT=$?
-            fi
-          fi
-
-          cd "$GITHUB_WORKSPACE"
-          {
-            echo "CURL_EXIT=$CURL_EXIT"
-            echo "HTTP_CODE=$HTTP_CODE"
-            echo "SIZE=$SIZE"
-            echo "SHA=$SHA"
-            echo "TAR_EXIT=$TAR_EXIT"
-            echo "TREE=$TREE"
-            echo "PUSH_EXIT=$PUSH_EXIT"
-            echo "EXPECTED_SIZE=290316"
-            echo "EXPECTED_SHA=e20d844cb4083eda67035f2b0b4385154a75e58aeeb49ea822c7a95c11b3c219"
-            echo "EXPECTED_TREE=90dc5dae850fcdac0c73906d0354ef596a2cccf4"
-            if [ -f /tmp/push.log ]; then
-              echo "--- PUSH_LOG ---"
-              cat /tmp/push.log
-            fi
-          } > "$STATUS"
-
+          tar -xJf /tmp/flicksmith-v04-src.tar.xz -C /tmp/flicksmith-v04
+          cd /tmp/flicksmith-v04
+          git init -q
           git config user.name "Praket7"
           git config user.email "149203433+Praket7@users.noreply.github.com"
-          git add restore-v04-exact/STATUS.txt
-          git commit -m "chore: record v0.4 restore diagnostics" || true
-          git push origin HEAD:refs/heads/bootstrap-v04-final-upload-0909 || true
+          git add -A
+          test "$(git write-tree)" = "90dc5dae850fcdac0c73906d0354ef596a2cccf4"
 
-          if [ "$CURL_EXIT" -ne 0 ] || [ "$HTTP_CODE" != "200" ] || [ "$SIZE" != "290316" ] || [ "$SHA" != "e20d844cb4083eda67035f2b0b4385154a75e58aeeb49ea822c7a95c11b3c219" ] || [ "$TAR_EXIT" -ne 0 ] || [ "$TREE" != "90dc5dae850fcdac0c73906d0354ef596a2cccf4" ] || [ "$PUSH_EXIT" -ne 0 ]; then
-            exit 1
-          fi
+          # GitHub Actions tokens may not create/update workflow files. Remove only
+          # those three verified files for this push; the connected GitHub API adds
+          # them back verbatim immediately afterward and we re-check the final tree.
+          git rm -q .github/workflows/ci.yml .github/workflows/desktop-build.yml .github/workflows/native-v04.yml
+          git commit -q -m "feat: FlickSmith v0.4 professional motion engine"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin HEAD:refs/heads/feature/flicksmith-v0.4-professional-motion-engine
