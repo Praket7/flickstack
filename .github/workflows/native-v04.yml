@@ -1,0 +1,95 @@
+name: FlickSmith v0.4 Native Verification
+
+on:
+  push:
+    branches: [main, 'feature/flicksmith-v0.4-professional-motion-engine']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: v04-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:integration
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          components: rustfmt, clippy
+      - name: Rust format
+        run: cargo fmt --check
+      - name: Rust clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Rust tests
+        run: cargo test --workspace
+
+  tracking-opencv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.88.0
+      - name: Install OpenCV development runtime
+        run: sudo apt-get update && sudo apt-get install -y libopencv-dev clang libclang-dev pkg-config
+      - name: Test OpenCV tracking backend
+        env:
+          OPENCV_LINK_LIBS: opencv_core,opencv_imgproc,opencv_video,opencv_videoio,opencv_features2d,opencv_calib3d
+        run: cargo test -p flick-tracking-opencv --features opencv-backend
+
+  desktop-package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            name: macos
+          - os: windows-latest
+            name: windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.88.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm install
+      - name: macOS FFmpeg
+        if: matrix.name == 'macos'
+        run: brew install ffmpeg
+      - name: Windows FFmpeg
+        if: matrix.name == 'windows'
+        run: choco install ffmpeg -y
+      - run: node --experimental-strip-types apps/desktop/build.ts
+      - run: cargo install tauri-cli --version '^2' --locked
+      - name: Build Tauri bundles
+        working-directory: apps/desktop
+        run: cargo tauri build
+      - name: Smoke desktop binary macOS
+        if: matrix.name == 'macos'
+        run: node --experimental-strip-types scripts/smoke-desktop-package.ts package-smoke.json apps/desktop/src-tauri/target/release/flicksmith-desktop
+      - name: Smoke desktop binary Windows
+        if: matrix.name == 'windows'
+        run: node --experimental-strip-types scripts/smoke-desktop-package.ts package-smoke.json apps/desktop/src-tauri/target/release/flicksmith-desktop.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flicksmith-v04-${{ matrix.name }}
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/**
+            package-smoke.json
