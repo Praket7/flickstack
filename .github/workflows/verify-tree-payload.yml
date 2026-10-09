@@ -1,0 +1,22 @@
+name: Verify frozen v0.3 tree payload
+
+on:
+  push:
+    branches:
+      - bootstrap-v04-from-tree-payload
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify v0.2 archive and v0.3 delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat bootstrap/baseline-* | base64 --decode > /tmp/v02.tar.xz
+          cat bootstrap/delta-* | base64 --decode > /tmp/v03.patch.xz
+          echo "v02=$(sha256sum /tmp/v02.tar.xz | awk '{print $1}')"
+          echo "v03=$(sha256sum /tmp/v03.patch.xz | awk '{print $1}')"
+          test "$(sha256sum /tmp/v02.tar.xz | awk '{print $1}')" = "0937e55bfc3a3d017d96499a6de04fb4a6dec0b1e207de70ff9feb317a8fd9e5"
+          test "$(sha256sum /tmp/v03.patch.xz | awk '{print $1}')" = "b60098d475bf28f0aa63515e395e9de7f3859185f4d609524a4c42e2638ed57d"
