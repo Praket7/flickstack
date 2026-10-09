@@ -1,0 +1,36 @@
+name: One-shot rustfmt for FlickSmith v0.4
+
+on:
+  push:
+    branches:
+      - 'feature/flicksmith-v0.4-professional-motion-engine'
+    paths:
+      - '.github/workflows/auto-format-v04.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/flicksmith-v0.4-professional-motion-engine
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@1.90.0
+        with:
+          components: rustfmt
+      - name: Format, remove one-shot workflow, and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo fmt
+          rm -f .github/workflows/auto-format-v04.yml
+          git config user.name 'Praket7'
+          git config user.email '149203433+Praket7@users.noreply.github.com'
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m 'style: rustfmt FlickSmith v0.4 native crates'
+            git push origin HEAD:feature/flicksmith-v0.4-professional-motion-engine
+          fi
