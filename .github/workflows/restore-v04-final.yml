@@ -17,12 +17,20 @@ jobs:
         with:
           ref: bootstrap-flicksmith-restore
           fetch-depth: 0
-      - name: Reconstruct and verify exact v0.4 source
+      - name: Fetch and verify exact v0.4 source
         shell: bash
         run: |
           set -euo pipefail
-          cat restore-v04-final/part-*.b64 | base64 --decode > /tmp/flicksmith-v04-src.tar.xz
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://drive.usercontent.google.com/download?id=1XRs_MkpzDQRL96RKZbV2bI2OoPV70CmG&export=download&confirm=t' \
+            -o /tmp/flicksmith-v04-src.tar.xz
+          echo "downloaded $(stat -c%s /tmp/flicksmith-v04-src.tar.xz) bytes"
+          sha256sum /tmp/flicksmith-v04-src.tar.xz
           test "$(sha256sum /tmp/flicksmith-v04-src.tar.xz | awk '{print $1}')" = "e20d844cb4083eda67035f2b0b4385154a75e58aeeb49ea822c7a95c11b3c219"
+      - name: Reconstruct and publish exact v0.4 tree
+        shell: bash
+        run: |
+          set -euo pipefail
           rm -rf /tmp/v04-src
           mkdir /tmp/v04-src
           tar -xJf /tmp/flicksmith-v04-src.tar.xz -C /tmp/v04-src
@@ -32,6 +40,7 @@ jobs:
           git rm -rf .
           cp -a /tmp/v04-src/. .
           git add -A
+          echo "tree $(git write-tree)"
           test "$(git write-tree)" = "90dc5dae850fcdac0c73906d0354ef596a2cccf4"
           git commit -m "feat: FlickSmith v0.4 professional motion engine"
           V04_SHA="$(git rev-parse HEAD)"
