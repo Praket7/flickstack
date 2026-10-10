@@ -1,0 +1,21 @@
+name: Rust Format Artifact
+on:
+  push:
+    branches: [feature/flicksmith-v0.5f-final]
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.88.0
+          components: rustfmt
+      - name: Produce rustfmt patch
+        run: |
+          cargo fmt --all
+          git diff --binary > rustfmt.patch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rustfmt-patch
+          path: rustfmt.patch
