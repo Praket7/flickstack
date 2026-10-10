@@ -10,9 +10,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm install
+      - run: npm run typecheck
       - name: Ensure FFmpeg
         run: command -v ffmpeg >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y ffmpeg)
-      - run: npm install
-      - run: npm run verify
+      - run: npm test
       - name: ChatGPT clean-environment smoke gate
         run: bash scripts/smoke-chatgpt.sh
