@@ -77,3 +77,5 @@
 - [x] macOS desktop package build and smoke passed.
 - [x] Windows desktop package build and smoke passed.
 - [x] Final branch comparison inspected before merge.
+
+Verification applies to implementation head `54eb4599f19b11d37869db5abf8055a75599ee4a`. Subsequent commits only update this Markdown plan and do not alter executable code, tests, build configuration, dependencies, or generated assets.
