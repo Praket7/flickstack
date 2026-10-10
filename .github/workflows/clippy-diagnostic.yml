@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feature/flicksmith-v0.5-final
-      - uses: dtolnay/rust-toolchain@1.88.0
+      - uses: dtolnay/rust-toolchain@1.90.0
         with:
           components: clippy
       - name: Capture clippy diagnostics
