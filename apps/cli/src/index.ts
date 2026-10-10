@@ -7,6 +7,7 @@ import { renderProject } from '../../../packages/render-ffmpeg/src/render.ts';
 import { reviewRender } from '../../../packages/qc/src/qc.ts';
 import { detectScenes } from '../../../packages/intelligence/src/scenes.ts';
 import { MediaSearchIndex } from '../../../packages/search/src/search.ts';
+import { runLocalCli } from './local.ts';
 
 export interface CliIO { log(message:string):void }
 function argValue(args:string[],flag:string, fallback?:string):string|undefined { const i=args.indexOf(flag); return i>=0?args[i+1]:fallback; }
@@ -18,9 +19,11 @@ function evidenceDb(projectPath:string):string{const dir=join(dirname(resolve(pr
 export function runCli(args:string[],io:CliIO={log:console.log}):number {
  const cmd=args[0];
  try {
+  if(cmd==='local') return runLocalCli(args.slice(1),io);
   if(cmd==='doctor'){
    const ffmpeg=commandExists('ffmpeg'),ffprobe=commandExists('ffprobe');
    io.log(`ffmpeg: ${ffmpeg?'ok':'missing'}`); io.log(`ffprobe: ${ffprobe?'ok':'missing'}`); io.log('paid APIs: not required');
+   io.log('local generation: run `flicksmith local doctor` then `flicksmith local setup --yes`');
    return ffmpeg&&ffprobe?0:1;
   }
   if(cmd==='init'){
@@ -51,7 +54,7 @@ export function runCli(args:string[],io:CliIO={log:console.log}):number {
   if(cmd==='render') { const projectPath=argValue(args,'--project','project.flick.json')!; const out=argValue(args,'--out','flicksmith-output.mp4')!; renderProject(load(projectPath),out); io.log(`rendered ${out}`); return 0; }
   if(cmd==='qc') { const projectPath=argValue(args,'--project','project.flick.json')!; const render=args[1]; if(!render) throw new Error('Usage: flicksmith qc <render> [--project FILE]'); io.log(JSON.stringify(reviewRender(render,load(projectPath)),null,2)); return 0; }
   if(cmd==='validate'){const path=argValue(args,'--project','project.flick.json')!; load(path); io.log(`${path}: valid`); return 0;}
-  io.log('FlickSmith commands: init, doctor, ingest, search, style, probe, validate, render, qc'); return cmd?1:0;
+  io.log('FlickSmith commands: init, doctor, local, ingest, search, style, probe, validate, render, qc'); return cmd?1:0;
  } catch(error){io.log(`error: ${error instanceof Error?error.message:String(error)}`); return 1;}
 }
 
