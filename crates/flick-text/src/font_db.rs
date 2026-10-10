@@ -33,12 +33,17 @@ pub struct TextEngine {
 
 impl Default for TextEngine {
     fn default() -> Self {
-        Self { fonts: parley::FontContext::new(), layout: parley::LayoutContext::new() }
+        Self {
+            fonts: parley::FontContext::new(),
+            layout: parley::LayoutContext::new(),
+        }
     }
 }
 
 impl TextEngine {
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 
     pub fn layout(&mut self, request: &TextLayoutRequest) -> Result<TextLayout, TextError> {
         layout_text(&mut self.fonts, &mut self.layout, request)
