@@ -1,0 +1,46 @@
+import {createHash} from 'node:crypto';
+import {assertWorkerCompatible,type RenderWorkerDescriptor} from '../../render-cache/src/index.ts';
+
+export interface ImmutableRenderJob {
+  id:string;
+  projectId:string;
+  projectRevision:string;
+  renderProgramRevision:string;
+  renderContractVersion:string;
+  rendererVersion:string;
+  backend:string;
+  assetHashes:string[];
+  outputFormat:string;
+  quality:Readonly<Record<string,unknown>>;
+  outputPath:string;
+}
+export interface RenderWorker extends RenderWorkerDescriptor {
+  concurrency:number;
+  immutable:boolean;
+  healthy:boolean;
+}
+export interface RenderWorkerLease {workerId:string;jobId:string;jobHash:string}
+
+function stable(v:unknown):string {
+  if(Array.isArray(v)) return `[${v.map(stable).join(',')}]`;
+  if(v&&typeof v==='object') return `{${Object.entries(v as Record<string,unknown>).sort(([a],[b])=>a.localeCompare(b)).map(([k,x])=>`${JSON.stringify(k)}:${stable(x)}`).join(',')}}`;
+  return JSON.stringify(v);
+}
+export function hashRenderJob(job:ImmutableRenderJob):string {
+  return createHash('sha256').update(stable({...job,assetHashes:[...job.assetHashes].sort()})).digest('hex');
+}
+export function assertImmutableRenderJob(job:ImmutableRenderJob):void {
+  if(!job.id||!job.projectId||!job.projectRevision||!job.renderProgramRevision) throw new Error('Render job requires immutable project and render revisions');
+  if(!job.renderContractVersion||!job.rendererVersion||!job.backend) throw new Error('Render job requires version-matched renderer contract');
+  if(!job.outputPath||job.outputPath.includes('\0')) throw new Error('Render job output path is invalid');
+  if(job.assetHashes.some(hash=>!/^([a-f0-9]{64})$/i.test(hash))) throw new Error('Render job assets must use SHA-256 content hashes');
+}
+export class RenderWorkerPool {
+  #workers=new Map<string,RenderWorker>();
+  #active=new Map<string,number>();
+  register(worker:RenderWorker):void {if(!worker.id||worker.concurrency<1)throw new Error('Invalid render worker');if(!worker.immutable)throw new Error('Render workers must be immutable');this.#workers.set(worker.id,structuredClone(worker));this.#active.set(worker.id,0)}
+  remove(workerId:string):void {this.#workers.delete(workerId);this.#active.delete(workerId)}
+  list():RenderWorker[]{return[...this.#workers.values()].map(structuredClone).sort((a,b)=>a.id.localeCompare(b.id))}
+  lease(job:ImmutableRenderJob):RenderWorkerLease {assertImmutableRenderJob(job);const candidates=this.list().filter(w=>w.healthy&&(this.#active.get(w.id)??0)<w.concurrency);for(const worker of candidates){try{assertWorkerCompatible(worker,{renderContractVersion:job.renderContractVersion,rendererVersion:job.rendererVersion,backend:job.backend});this.#active.set(worker.id,(this.#active.get(worker.id)??0)+1);return{workerId:worker.id,jobId:job.id,jobHash:hashRenderJob(job)}}catch{continue}}throw new Error('No compatible healthy render worker available')}
+  release(lease:RenderWorkerLease):void {const count=this.#active.get(lease.workerId);if(count===undefined)return;this.#active.set(lease.workerId,Math.max(0,count-1))}
+}
