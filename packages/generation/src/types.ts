@@ -1,8 +1,38 @@
 import type { GenerationKind } from '../../schema/src/v3/project.ts';
 export interface GenerationBudget { maxUnits?:number; maxCostUsd?:number }
 export interface GenerationRequest { id:string; projectId:string; kind:GenerationKind; prompt?:string; inputAssetIds:string[]; parameters:Record<string,unknown>; seed?:number|string; provider?:string; model?:string; previousResponseId?:string; budget?:GenerationBudget }
-export interface ProviderCapabilityManifest { provider:string; kinds:GenerationKind[]; execution:'local'|'cloud'; supportsTransparency:boolean; supportsMasks:boolean; supportsReferences:boolean; supportsStreaming:boolean; supportsCancellation:boolean; models?:string[]; maxWidth?:number; maxHeight?:number; estimatedUnit?:'image'|'second'|'sample'|'token'; estimatedCostUnits?:number; metadata?:Record<string,unknown> }
-export interface GenerationRequirements { execution?:'local'|'cloud'; supportsTransparency?:boolean; supportsMasks?:boolean; supportsReferences?:boolean; supportsStreaming?:boolean; supportsCancellation?:boolean; requireCommercialRights?:boolean }
+
+export interface VideoProviderCapabilities {
+ supportsFirstFrame:boolean;
+ supportsLastFrame:boolean;
+ maxReferenceImages:number;
+ supportsNegativePrompt:boolean;
+ supportsSeed:boolean;
+ minDurationSeconds?:number;
+ maxDurationSeconds?:number;
+ supportedResolutions?:string[];
+ supportedAspectRatios?:string[];
+ supportsCameraControl:boolean;
+ supportsMotionMasks:boolean;
+ supportsExtension:boolean;
+ supportsNativeAudio:boolean;
+}
+export interface GenerationVideoRequirements {
+ firstFrame?:boolean;
+ lastFrame?:boolean;
+ referenceImages?:number;
+ negativePrompt?:boolean;
+ seed?:boolean;
+ durationSeconds?:number;
+ resolution?:string;
+ aspectRatio?:string;
+ cameraControl?:boolean;
+ motionMasks?:boolean;
+ extension?:boolean;
+ nativeAudio?:boolean;
+}
+export interface ProviderCapabilityManifest { provider:string; kinds:GenerationKind[]; execution:'local'|'cloud'; supportsTransparency:boolean; supportsMasks:boolean; supportsReferences:boolean; supportsStreaming:boolean; supportsCancellation:boolean; video?:VideoProviderCapabilities; models?:string[]; maxWidth?:number; maxHeight?:number; estimatedUnit?:'image'|'second'|'sample'|'token'; estimatedCostUnits?:number; metadata?:Record<string,unknown> }
+export interface GenerationRequirements { execution?:'local'|'cloud'; supportsTransparency?:boolean; supportsMasks?:boolean; supportsReferences?:boolean; supportsStreaming?:boolean; supportsCancellation?:boolean; requireCommercialRights?:boolean; video?:GenerationVideoRequirements }
 export interface GeneratedOutput { path:string; mediaType:string; sha256:string }
 export interface GenerationUsage { units?:number; costUsd?:number }
 export interface GenerationRights { commercialAllowed?:boolean|null; attributionRequired?:boolean; policy?:string }
