@@ -59,7 +59,7 @@ export function buildCraftDirection(input: CraftDirectionInput): CraftDirection 
       'Prefer editorial cuts, match cuts, motivated wipes, and physical transitions; avoid transition spam and repeated zoom/push presets.',
       'Vary shot duration by narrative function and performance rather than mechanically equal beats.',
       'Typography must follow an authored hierarchy and grid; keep critical copy native and avoid generic centered bold captions.',
-      'Sound design must carry room tone, tactile foley, transitions, dynamics, and purposeful silence instead of music-only coverage.',
+      'sound design must carry room tone, tactile foley, transitions, dynamics, and purposeful silence instead of music-only coverage.',
       'Preserve believable imperfections when they communicate material, camera, performance, or environment; never add random jitter as fake humanity.',
       'Use generation to solve a specific coverage problem, not to replace available authentic footage by default.',
       'Require continuity of lighting, lens logic, screen direction, product geometry, and action across adjacent shots.',
