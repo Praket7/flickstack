@@ -12,7 +12,7 @@ test('craft direction rejects generic AI-ad defaults and requires authored visua
   assert.equal(direction.forbidGenericAiAesthetic, true);
   assert.ok(direction.rules.some((rule) => rule.includes('motivat')));
   assert.ok(direction.rules.some((rule) => rule.includes('brand')));
-  assert.ok(direction.rules.some((rule) => rule.includes('sound')));
+  assert.ok(direction.rules.some((rule) => rule.toLowerCase().includes('sound')));
 });
 
 test('human-craft QC penalizes template repetition, unmotivated motion, transition spam and weak audiovisual intent', () => {
