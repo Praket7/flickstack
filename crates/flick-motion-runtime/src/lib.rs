@@ -116,6 +116,66 @@ fn safe_area(value: &Value) -> [f64; 4] {
     [0usize, 1, 2, 3].map(|index| values.get(index).and_then(Value::as_f64).unwrap_or(0.0))
 }
 
+fn sample_envelope(value: Option<&Value>, frame: f64) -> f64 {
+    let Some(points) = value.and_then(Value::as_array) else {
+        return 0.0;
+    };
+    if points.is_empty() {
+        return 0.0;
+    }
+    if points.first().and_then(Value::as_f64).is_some() {
+        let index = frame.max(0.0).round() as usize;
+        return points
+            .get(index)
+            .or_else(|| points.last())
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0);
+    }
+    let point = |value: &Value| -> Option<(f64, f64)> {
+        Some((
+            value.get("frame")?.as_f64()?,
+            value.get("value")?.as_f64()?,
+        ))
+    };
+    let Some(first) = points.first().and_then(point) else {
+        return 0.0;
+    };
+    if frame <= first.0 {
+        return first.1;
+    }
+    let Some(last) = points.last().and_then(point) else {
+        return first.1;
+    };
+    if frame >= last.0 {
+        return last.1;
+    }
+    for pair in points.windows(2) {
+        let Some(a) = point(&pair[0]) else {
+            continue;
+        };
+        let Some(b) = point(&pair[1]) else {
+            continue;
+        };
+        if frame <= b.0 {
+            let span = b.0 - a.0;
+            if span.abs() <= f64::EPSILON {
+                return b.1;
+            }
+            let t = (frame - a.0) / span;
+            return a.1 + (b.1 - a.1) * t;
+        }
+    }
+    0.0
+}
+
+fn sample_audio(program: &RenderProgramV1, frame: f64) -> [f64; 4] {
+    let Some(analysis) = program.audio_analyses.first() else {
+        return [0.0; 4];
+    };
+    let envelopes = analysis.get("envelopes").unwrap_or(&Value::Null);
+    ["energy", "low", "mid", "high"].map(|signal| sample_envelope(envelopes.get(signal), frame))
+}
+
 pub struct MotionRuntime {
     program: Arc<RenderProgramV1>,
     max_depth: usize,
@@ -166,6 +226,7 @@ impl MotionRuntime {
                     da.total_cmp(&db)
                 })
             });
+        let audio = sample_audio(&self.program, frame as f64);
         let mut local = HashMap::<String, LocalLayerState>::new();
         for (index, l) in self.program.layers.iter().enumerate() {
             let id = l
@@ -186,10 +247,10 @@ impl MotionRuntime {
                 index,
                 count: self.program.layers.len(),
                 seed: 0.,
-                energy: 0.,
-                low: 0.,
-                mid: 0.,
-                high: 0.,
+                energy: audio[0],
+                low: audio[1],
+                mid: audio[2],
+                high: audio[3],
             };
             let ep = |name: &str, default: Vec3| {
                 let p = tr.get(name).unwrap_or(&Value::Null);
