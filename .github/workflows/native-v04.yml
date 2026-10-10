@@ -77,7 +77,7 @@ jobs:
         if: matrix.name == 'windows'
         run: choco install ffmpeg -y
       - run: node --experimental-strip-types apps/desktop/build.ts
-      - run: cargo install tauri-cli --version '^2' --locked
+      - run: cargo install tauri-cli --version '2.11.5' --locked
       - name: Build Tauri bundles
         working-directory: apps/desktop
         run: cargo tauri build
