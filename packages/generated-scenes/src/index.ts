@@ -6,3 +6,4 @@ export * from './assemble.ts';
 export * from './motion.ts';
 export * from './anchors.ts';
 export * from './shot-router.ts';
+export * from './anchor-workflow.ts';
