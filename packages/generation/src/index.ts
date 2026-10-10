@@ -11,3 +11,4 @@ export * from './providers/depth-http.ts';
 export * from './providers/segmentation-http.ts';
 export * from './providers/local-image-edit-http.ts';
 export * from './providers/local-video-http.ts';
+export * from './providers/local-video-command.ts';
