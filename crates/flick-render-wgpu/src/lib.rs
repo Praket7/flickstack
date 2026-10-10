@@ -115,7 +115,7 @@ impl GpuRenderer {
             .device
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("FlickSmith premultiplied compositor layout"),
-                bind_group_layouts: &[&bgl],
+                bind_group_layouts: &[Some(&bgl)],
                 immediate_size: 0,
             });
         let shader = device
@@ -297,7 +297,9 @@ impl GpuRenderer {
         rx.recv()
             .map_err(|e| RenderError::Device(format!("map callback: {e}")))?
             .map_err(|e| RenderError::Device(format!("map read: {e}")))?;
-        let mapped = slice.get_mapped_range();
+        let mapped = slice
+            .get_mapped_range()
+            .map_err(|e| RenderError::Device(format!("mapped range: {e}")))?;
         let mut pixels = Vec::with_capacity((scene.width * scene.height) as usize);
         for y in 0..scene.height as usize {
             let start = y * padded as usize;
