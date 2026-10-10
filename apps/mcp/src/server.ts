@@ -1,87 +1,21 @@
 import * as readline from 'node:readline';
-import { createServer, type Server } from 'node:http';
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { parseProject, type FlickProject } from '../../../packages/schema/src/project.ts';
-import { parseProjectV2 } from '../../../packages/schema/src/v2/parse.ts';
-import type { FlickProjectV2 } from '../../../packages/schema/src/v2/project.ts';
-import { parseProjectV3 } from '../../../packages/schema/src/v3/parse.ts';
-import type { FlickProjectV3 } from '../../../packages/schema/src/v3/project.ts';
-import { FlickSmithHost } from './host.ts';
-import { V2FlickSmithHost } from './host-v2.ts';
-import { V3FlickSmithHost } from './host-v3.ts';
-import { toolCatalog, v2ToolCatalog, v3ToolCatalog, type McpTool } from './tools.ts';
-
-function emptyProject(name='FlickSmith Project'):FlickProject{return{version:1,id:name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),name,format:{width:1080,height:1920,fps:{numerator:30,denominator:1},audioSampleRate:48000},assets:[],tracks:[{id:'v1',kind:'video',name:'V1',clips:[]},{id:'a1',kind:'audio',name:'A1',clips:[]},{id:'m1',kind:'motion',name:'Motion',clips:[]},{id:'c1',kind:'caption',name:'Captions',clips:[]}],markers:[],style:{captionMaxChars:42},provenance:[],checkpoints:[],branches:[]};}
-
-type AnyProject=FlickProject|FlickProjectV2|FlickProjectV3;
-export interface RpcToolHost { call(name:string,args:unknown):Promise<unknown>; close?():void }
-export interface RpcRuntime {host:RpcToolHost;catalog:McpTool[]}
-export function runtimeForProject(project:AnyProject,options:{projectPath?:string;permittedRoots?:string[]}={}):RpcRuntime {
- if(project.version===3)return{host:new V3FlickSmithHost({project,projectPath:options.projectPath,permittedRoots:options.permittedRoots}),catalog:v3ToolCatalog};
- if(project.version===2)return{host:new V2FlickSmithHost({project,projectPath:options.projectPath,permittedRoots:options.permittedRoots}),catalog:v2ToolCatalog};
- return{host:new FlickSmithHost({project,projectPath:options.projectPath,permittedRoots:options.permittedRoots}),catalog:toolCatalog};
-}
-const configuredProjectPath=process.env.FLICKSMITH_PROJECT?resolve(process.env.FLICKSMITH_PROJECT):undefined;
-const rawProject=configuredProjectPath&&existsSync(configuredProjectPath)?JSON.parse(readFileSync(configuredProjectPath,'utf8')):undefined;
-const project:AnyProject=rawProject?(rawProject.version===3?parseProjectV3(rawProject):rawProject.version===2?parseProjectV2(rawProject):parseProject(rawProject)):emptyProject();
-const configuredRoots=(process.env.FLICKSMITH_MEDIA_ROOTS??(configuredProjectPath?dirname(configuredProjectPath):process.cwd())).split(process.platform==='win32'?';':':').filter(Boolean);
-const runtime=runtimeForProject(project,{projectPath:configuredProjectPath,permittedRoots:configuredRoots});
-export const host=runtime.host;
-export const activeToolCatalog=runtime.catalog;
-
-export function createRpcHandler(selected:RpcRuntime):(req:any)=>Promise<any>{
- return async(req:any):Promise<any>=>{
-  const id=req?.id;
-  if(req?.method==='initialize') return {jsonrpc:'2.0',id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}},serverInfo:{name:'flicksmith',version:'0.5.0-dev'}}};
-  if(req?.method==='notifications/initialized') return null;
-  if(req?.method==='tools/list') return {jsonrpc:'2.0',id,result:{tools:selected.catalog}};
-  if(req?.method==='tools/call'){
-   try{const result=await selected.host.call(String(req.params?.name??''),req.params?.arguments??{});return{jsonrpc:'2.0',id,result:{content:[{type:'text',text:JSON.stringify(result,null,2)}],structuredContent:result}};}
-   catch(error){return{jsonrpc:'2.0',id,result:{isError:true,content:[{type:'text',text:error instanceof Error?error.message:String(error)}]}};}
-  }
-  return {jsonrpc:'2.0',id,error:{code:-32601,message:'Method not found'}};
- };
-}
-export const handleRpc=createRpcHandler(runtime);
-
-export function isLoopbackHost(host:string):boolean {
- return host==='127.0.0.1'||host==='::1'||host==='[::1]'||host==='localhost';
-}
-export interface HttpMcpServerHandle { ready:Promise<{port:number}>; close():Promise<void> }
-export function isAllowedDesktopOrigin(origin:string|undefined):boolean {
- if(!origin)return true;
- return origin==='tauri://localhost'||origin==='http://tauri.localhost'||origin==='https://tauri.localhost';
-}
-export function startHttpMcpServer(options:{host?:string;port?:number;maxBodyBytes?:number}={}):HttpMcpServerHandle {
- const bindHost=options.host??'127.0.0.1',port=options.port??7777,maxBody=options.maxBodyBytes??1_048_576;
- if(!isLoopbackHost(bindHost)) throw new Error(`MCP HTTP transport must bind loopback only, got ${bindHost}`);
- let server:Server;
- const ready=new Promise<{port:number}>((resolveReady,rejectReady)=>{
-  server=createServer(async(req,res)=>{
-   const origin=typeof req.headers.origin==='string'?req.headers.origin:undefined;
-   if(!isAllowedDesktopOrigin(origin)){res.statusCode=403;res.end('origin forbidden');return;}
-   if(origin){res.setHeader('access-control-allow-origin',origin);res.setHeader('vary','origin');}
-   if(req.method==='OPTIONS'){res.statusCode=204;res.setHeader('access-control-allow-methods','POST, OPTIONS');res.setHeader('access-control-allow-headers','content-type');res.end();return;}
-   if(req.url!=='/mcp'){res.statusCode=404;res.end('not found');return;}
-   if(req.method!=='POST'){res.statusCode=405;res.setHeader('allow','POST, OPTIONS');res.end('method not allowed');return;}
-   const chunks:Buffer[]=[];let size=0,tooLarge=false;
-   req.on('data',(chunk:Buffer)=>{size+=chunk.length;if(size>maxBody){tooLarge=true;req.destroy();return;}chunks.push(chunk);});
-   req.on('end',async()=>{if(tooLarge){if(!res.headersSent){res.statusCode=413;res.end('payload too large');}return;}let parsed:any;try{parsed=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{res.statusCode=400;res.end('invalid json');return;}try{const result=await handleRpc(parsed);res.statusCode=200;res.setHeader('content-type','application/json');res.end(JSON.stringify(result));}catch(e){res.statusCode=500;res.end(JSON.stringify({jsonrpc:'2.0',id:parsed?.id,error:{code:-32603,message:e instanceof Error?e.message:String(e)}}));}});
-  });
-  server.once('error',rejectReady);server.listen(port,bindHost,()=>{const address=server.address();if(!address||typeof address==='string'){rejectReady(new Error('Unable to resolve MCP listen address'));return;}resolveReady({port:address.port});});
- });
- return {ready,close:()=>new Promise<void>((resolveClose,rejectClose)=>{server.close(err=>err?rejectClose(err):resolveClose());})};
-}
-
-async function runMain():Promise<void>{
- const requestedPort=process.env.FLICKSMITH_HTTP_PORT;
- if(requestedPort!==undefined){
-  const bindHost=process.env.FLICKSMITH_HTTP_HOST??'127.0.0.1';const port=Number(requestedPort);if(!Number.isInteger(port)||port<0||port>65535)throw new Error('FLICKSMITH_HTTP_PORT must be 0..65535');
-  const server=startHttpMcpServer({host:bindHost,port});const ready=await server.ready;process.stdout.write(JSON.stringify({type:'ready',port:ready.port})+'\n');
-  const close=async()=>{try{await server.close();}finally{host.close?.();process.exit(0);}};process.once('SIGINT',()=>void close());process.once('SIGTERM',()=>void close());return;
- }
- const rl=readline.createInterface({input:process.stdin,terminal:false});const send=(value:unknown):void=>{if(value!==null)process.stdout.write(JSON.stringify(value)+'\n');};
- rl.on('line',async(line:string)=>{let req:any;try{req=JSON.parse(line);}catch{return;}try{send(await handleRpc(req));}catch(e){send({jsonrpc:'2.0',id:req?.id,error:{code:-32603,message:e instanceof Error?e.message:String(e)}});}});
-}
-if(import.meta.url===`file://${process.argv[1]}`) void runMain();
+import {createServer,type Server} from 'node:http';
+import {existsSync,readFileSync} from 'node:fs';
+import {dirname,resolve} from 'node:path';
+import {parseProject,type FlickProject} from '../../../packages/schema/src/project.ts';
+import {parseProjectV2} from '../../../packages/schema/src/v2/parse.ts';
+import type {FlickProjectV2} from '../../../packages/schema/src/v2/project.ts';
+import {parseProjectV3} from '../../../packages/schema/src/v3/parse.ts';
+import type {FlickProjectV3} from '../../../packages/schema/src/v3/project.ts';
+import {FlickSmithHost} from './host.ts';import {V2FlickSmithHost} from './host-v2.ts';import {V3FlickSmithHost} from './host-v3.ts';
+import {toolCatalog,v2ToolCatalog,v3ToolCatalog,type McpTool} from './tools.ts';
+import {callCraftTool,craftToolCatalog,isCraftTool} from './craft-tools.ts';
+function emptyProject(name='FlickSmith Project'):FlickProject{return{version:1,id:name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),name,format:{width:1080,height:1920,fps:{numerator:30,denominator:1},audioSampleRate:48000},assets:[],tracks:[{id:'v1',kind:'video',name:'V1',clips:[]},{id:'a1',kind:'audio',name:'A1',clips:[]},{id:'m1',kind:'motion',name:'Motion',clips:[]},{id:'c1',kind:'caption',name:'Captions',clips:[]}],markers:[],style:{captionMaxChars:42},provenance:[],checkpoints:[],branches:[]}}
+type AnyProject=FlickProject|FlickProjectV2|FlickProjectV3;export interface RpcToolHost{call(name:string,args:unknown):Promise<unknown>;close?():void}export interface RpcRuntime{host:RpcToolHost;catalog:McpTool[]}
+function withCraft(host:RpcToolHost):RpcToolHost{return{call:(name,args)=>isCraftTool(name)?callCraftTool(name,args):host.call(name,args),close:()=>host.close?.()}}
+export function runtimeForProject(project:AnyProject,options:{projectPath?:string;permittedRoots?:string[]}={}):RpcRuntime{if(project.version===3){const host=new V3FlickSmithHost({project,projectPath:options.projectPath,permittedRoots:options.permittedRoots});return{host:withCraft(host),catalog:[...v3ToolCatalog,...craftToolCatalog]}}if(project.version===2)return{host:new V2FlickSmithHost({project,projectPath:options.projectPath,permittedRoots:options.permittedRoots}),catalog:v2ToolCatalog};return{host:new FlickSmithHost({project,projectPath:options.projectPath,permittedRoots:options.permittedRoots}),catalog:toolCatalog}}
+const configuredProjectPath=process.env.FLICKSMITH_PROJECT?resolve(process.env.FLICKSMITH_PROJECT):undefined;const rawProject=configuredProjectPath&&existsSync(configuredProjectPath)?JSON.parse(readFileSync(configuredProjectPath,'utf8')):undefined;const project:AnyProject=rawProject?(rawProject.version===3?parseProjectV3(rawProject):rawProject.version===2?parseProjectV2(rawProject):parseProject(rawProject)):emptyProject();const configuredRoots=(process.env.FLICKSMITH_MEDIA_ROOTS??(configuredProjectPath?dirname(configuredProjectPath):process.cwd())).split(process.platform==='win32'?';':':').filter(Boolean);const runtime=runtimeForProject(project,{projectPath:configuredProjectPath,permittedRoots:configuredRoots});export const host=runtime.host;export const activeToolCatalog=runtime.catalog;
+export function createRpcHandler(selected:RpcRuntime):(req:any)=>Promise<any>{return async(req:any):Promise<any>=>{const id=req?.id;if(req?.method==='initialize')return{jsonrpc:'2.0',id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}},serverInfo:{name:'flicksmith',version:'0.5.0'}}};if(req?.method==='notifications/initialized')return null;if(req?.method==='tools/list')return{jsonrpc:'2.0',id,result:{tools:selected.catalog}};if(req?.method==='tools/call'){try{const result=await selected.host.call(String(req.params?.name??''),req.params?.arguments??{});return{jsonrpc:'2.0',id,result:{content:[{type:'text',text:JSON.stringify(result,null,2)}],structuredContent:result}}}catch(error){return{jsonrpc:'2.0',id,result:{isError:true,content:[{type:'text',text:error instanceof Error?error.message:String(error)}]}}}}return{jsonrpc:'2.0',id,error:{code:-32601,message:'Method not found'}}}}
+export const handleRpc=createRpcHandler(runtime);export function isLoopbackHost(host:string):boolean{return host==='127.0.0.1'||host==='::1'||host==='[::1]'||host==='localhost'}export interface HttpMcpServerHandle{ready:Promise<{port:number}>;close():Promise<void>}export function isAllowedDesktopOrigin(origin:string|undefined):boolean{if(!origin)return true;return origin==='tauri://localhost'||origin==='http://tauri.localhost'||origin==='https://tauri.localhost'}
+export function startHttpMcpServer(options:{host?:string;port?:number;maxBodyBytes?:number}={}):HttpMcpServerHandle{const bindHost=options.host??'127.0.0.1',port=options.port??7777,maxBody=options.maxBodyBytes??1_048_576;if(!isLoopbackHost(bindHost))throw new Error(`MCP HTTP transport must bind loopback only, got ${bindHost}`);let server:Server;const ready=new Promise<{port:number}>((resolveReady,rejectReady)=>{server=createServer(async(req,res)=>{const origin=typeof req.headers.origin==='string'?req.headers.origin:undefined;if(!isAllowedDesktopOrigin(origin)){res.statusCode=403;res.end('origin forbidden');return}if(origin){res.setHeader('access-control-allow-origin',origin);res.setHeader('vary','origin')}if(req.method==='OPTIONS'){res.statusCode=204;res.setHeader('access-control-allow-methods','POST, OPTIONS');res.setHeader('access-control-allow-headers','content-type');res.end();return}if(req.url!=='/mcp'){res.statusCode=404;res.end('not found');return}if(req.method!=='POST'){res.statusCode=405;res.setHeader('allow','POST, OPTIONS');res.end('method not allowed');return}const chunks:Buffer[]=[];let size=0,tooLarge=false;req.on('data',(chunk:Buffer)=>{size+=chunk.length;if(size>maxBody){tooLarge=true;req.destroy();return}chunks.push(chunk)});req.on('end',async()=>{if(tooLarge){if(!res.headersSent){res.statusCode=413;res.end('payload too large')}return}let parsed:any;try{parsed=JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch{res.statusCode=400;res.end('invalid json');return}try{const result=await handleRpc(parsed);res.statusCode=200;res.setHeader('content-type','application/json');res.end(JSON.stringify(result))}catch(e){res.statusCode=500;res.end(JSON.stringify({jsonrpc:'2.0',id:parsed?.id,error:{code:-32603,message:e instanceof Error?e.message:String(e)}}))}})});server.once('error',rejectReady);server.listen(port,bindHost,()=>{const address=server.address();if(!address||typeof address==='string'){rejectReady(new Error('Unable to resolve MCP listen address'));return}resolveReady({port:address.port})})});return{ready,close:()=>new Promise<void>((resolveClose,rejectClose)=>{server.close(err=>err?rejectClose(err):resolveClose())})}}
+async function runMain():Promise<void>{const requestedPort=process.env.FLICKSMITH_HTTP_PORT;if(requestedPort!==undefined){const bindHost=process.env.FLICKSMITH_HTTP_HOST??'127.0.0.1';const port=Number(requestedPort);if(!Number.isInteger(port)||port<0||port>65535)throw new Error('FLICKSMITH_HTTP_PORT must be 0..65535');const server=startHttpMcpServer({host:bindHost,port});const ready=await server.ready;process.stdout.write(JSON.stringify({type:'ready',port:ready.port})+'\n');const close=async()=>{try{await server.close()}finally{host.close?.();process.exit(0)}};process.once('SIGINT',()=>void close());process.once('SIGTERM',()=>void close());return}const rl=readline.createInterface({input:process.stdin,terminal:false});const send=(value:unknown):void=>{if(value!==null)process.stdout.write(JSON.stringify(value)+'\n')};rl.on('line',async(line:string)=>{let req:any;try{req=JSON.parse(line)}catch{return}try{send(await handleRpc(req))}catch(e){send({jsonrpc:'2.0',id:req?.id,error:{code:-32603,message:e instanceof Error?e.message:String(e)}})}})}if(import.meta.url===`file://${process.argv[1]}`)void runMain();
