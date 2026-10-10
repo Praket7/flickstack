@@ -1,0 +1,52 @@
+name: Render Codex Promo
+
+on:
+  push:
+    branches:
+      - promo/codex-usage-v1
+    paths:
+      - 'examples/codex-promo/**'
+      - '.github/workflows/render-codex-promo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-codex-promo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Ensure FFmpeg
+        run: command -v ffmpeg >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      - name: Generate Codex UI scenes and soundtrack
+        run: node --experimental-strip-types examples/codex-promo/render-assets.ts
+      - name: Validate canonical FlickSmith project
+        run: node --experimental-strip-types apps/cli/src/index.ts validate --project examples/codex-promo/project.flick.json
+      - name: Render with FlickSmith
+        run: node --experimental-strip-types apps/cli/src/index.ts render --project examples/codex-promo/project.flick.json --out examples/codex-promo/out/Codex_Usage_Promo_42s.mp4
+      - name: Run FlickSmith QC
+        run: node --experimental-strip-types apps/cli/src/index.ts qc examples/codex-promo/out/Codex_Usage_Promo_42s.mp4 --project examples/codex-promo/project.flick.json > examples/codex-promo/out/QC.json
+      - name: Inspect deliverable
+        run: ffprobe -v error -show_entries format=duration,size:stream=codec_name,width,height,r_frame_rate -of json examples/codex-promo/out/Codex_Usage_Promo_42s.mp4 > examples/codex-promo/out/ffprobe.json
+      - name: Upload promo artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-usage-promo-42s
+          path: |
+            examples/codex-promo/out/Codex_Usage_Promo_42s.mp4
+            examples/codex-promo/out/QC.json
+            examples/codex-promo/out/ffprobe.json
+            examples/codex-promo/out/render-manifest.json
+            examples/codex-promo/project.flick.json
+            examples/codex-promo/render-assets.ts
+          retention-days: 14
