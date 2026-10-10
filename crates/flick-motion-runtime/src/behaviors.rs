@@ -17,9 +17,7 @@ fn n(v: Option<&Value>, d: f64) -> f64 {
     v.and_then(Value::as_f64).unwrap_or(d)
 }
 fn p(c: BehaviorContext) -> f64 {
-    ((c.frame - c.start) / c.duration.max(1.0))
-        .max(0.0)
-        .min(1.0)
+    ((c.frame - c.start) / c.duration.max(1.0)).clamp(0.0, 1.0)
 }
 fn noise(seed: f64, x: f64) -> f64 {
     let v = ((seed + 1.0) * 91.17 + x * 12.9898).sin() * 43758.5453;
