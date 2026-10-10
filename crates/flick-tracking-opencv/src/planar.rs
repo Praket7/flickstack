@@ -212,11 +212,9 @@ pub fn solve_planar_track_impl(
         let h = calib3d::find_homography(
             &src,
             &dst,
+            &mut mask,
             calib3d::RANSAC,
             options.ransac_threshold,
-            &mut mask,
-            2000,
-            0.995,
         )?;
         if h.empty() {
             frames.push(PlanarTrackFrame {
