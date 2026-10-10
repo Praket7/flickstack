@@ -21,6 +21,7 @@ impl RenderDevice {
                     .unwrap_or(wgpu::PowerPreference::HighPerformance),
                 force_fallback_adapter: opts.force_fallback_adapter,
                 compatible_surface: None,
+                apply_limit_buckets: false,
             }),
         )
         .map_err(|e| RenderError::Device(format!("request adapter: {e}")))?;
