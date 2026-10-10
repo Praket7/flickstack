@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {LocalVideoCommandProvider} from '../src/index.ts';
+
+test('direct local command provider runs a zero-cost local backend and returns staged video',async()=>{const root=mkdtempSync(join(tmpdir(),'cmd-video-')),script=join(root,'backend.mjs');writeFileSync(script,`import{readFileSync,writeFileSync,mkdirSync}from'node:fs';import{join}from'node:path';const args=process.argv.slice(2),req=args[args.indexOf('--request')+1],out=args[args.indexOf('--output')+1];const body=JSON.parse(readFileSync(req,'utf8'));if(body.request.video.firstFrameAssetId!=='front')process.exit(9);mkdirSync(out,{recursive:true});writeFileSync(join(out,'clip.mp4'),'local-video');writeFileSync(join(out,'result.json'),JSON.stringify({model:'wan-fixture',outputs:[{path:'clip.mp4',mediaType:'video/mp4'}]}));`);try{const p=new LocalVideoCommandProvider({command:process.execPath,args:[script],stagingRoot:join(root,'jobs'),capabilities:{supportsLastFrame:true,supportsCameraControl:true},resolveInputAsset:async id=>({bytes:Buffer.from(id),mediaType:'image/png'})});const out=await p.generate({id:'v',projectId:'p',kind:'video',prompt:'orbit',inputAssetIds:['front'],parameters:{},video:{firstFrameAssetId:'front',lastFrameAssetId:'side',durationSeconds:4,camera:{orbitDegrees:15}},seed:1},new AbortController().signal);assert.equal(out.outputs.length,1);assert.equal(readFileSync(out.outputs[0].path).toString(),'local-video');assert.equal(out.usage?.costUsd,0);assert.equal(out.providerMetadata?.transport,'command')}finally{rmSync(root,{recursive:true,force:true})}});
