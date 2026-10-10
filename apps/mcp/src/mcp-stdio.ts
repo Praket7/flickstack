@@ -33,21 +33,22 @@ function mediaType(path: string): string {
   }
 }
 function loadProject() { return parseProjectV3(JSON.parse(readFileSync(projectPath,'utf8'))); }
+
+const providerRegistry = new GenerationProviderRegistry();
 function creativeValidationContext(input: any) {
   return {
     assetIds: new Set<string>(Array.isArray(input?.assetIds) ? input.assetIds.map(String) : []),
     compositionIds: new Set<string>(Array.isArray(input?.compositionIds) ? input.compositionIds.map(String) : []),
     beatIds: new Set<string>(Array.isArray(input?.beatIds) ? input.beatIds.map(String) : []),
     motionStyleIds: new Set<string>(Array.isArray(input?.motionStyleIds) ? input.motionStyleIds.map(String) : []),
-    providers: Array.isArray(input?.providers) ? input.providers : [],
+    providers: providerRegistry,
   };
 }
 
 let scheduler: JobScheduler | undefined;
 let generation: GenerationRuntime | undefined;
 if (process.env.OPENAI_API_KEY) {
-  const registry = new GenerationProviderRegistry();
-  registry.register(new OpenAIImageProvider({ resolveInputAsset: async (assetId) => {
+  providerRegistry.register(new OpenAIImageProvider({ resolveInputAsset: async (assetId) => {
     const project = loadProject();
     const asset = project.assets.find((candidate) => candidate.id === assetId);
     if (!asset) throw new Error(`Unknown input asset ${assetId}`);
@@ -57,7 +58,7 @@ if (process.env.OPENAI_API_KEY) {
     return { bytes: readFileSync(path), mediaType: mediaType(path) };
   }}));
   scheduler = new JobScheduler(new JobStore(), { cpu:1, io:2, gpu:1, model:1 });
-  generation = new GenerationRuntime({ registry, scheduler, stagingRoot: resolve(dirname(projectPath), '.flick/staging') });
+  generation = new GenerationRuntime({ registry: providerRegistry, scheduler, stagingRoot: resolve(dirname(projectPath), '.flick/staging') });
 }
 
 async function callTool(name: string, args: any): Promise<unknown> {
