@@ -97,6 +97,9 @@ jobs:
       - run: node --experimental-strip-types apps/desktop/build.ts
       - name: Install Tauri CLI
         run: npm install --global @tauri-apps/cli@2.11.5
+      - name: Generate Tauri icons
+        working-directory: apps/desktop
+        run: tauri icon app-icon.svg --output src-tauri/icons
       - name: Build Tauri bundle macOS
         if: matrix.name == 'macos'
         shell: bash
