@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {acceptRankedGenerationCandidates,rankGenerationCandidates,type GenerationRequest,type StagedGenerationOutput} from '../src/index.ts';
+import type {ProductIdentityPackage} from '../../product-fidelity/src/index.ts';
+
+const identity:ProductIdentityPackage={id:'product',name:'Exact bottle',approvedAssetIds:['source'],expectedOcrStrings:['BRAND'],logoReferenceAssetIds:['logo'],silhouetteReferenceAssetId:'shape',protectedColors:[{name:'green',referenceLab:[70,-50,30]}]};
+const good={observedOcrStrings:['BRAND'],logoSimilarity:.99,silhouetteSimilarity:.98,colorSimilarity:.98,segmentationStability:.96,temporalConsistency:.94,flickerScore:.04,cameraAdherence:.9,productOccupancy:.5,promptAdherence:.9,aestheticScore:.85};
+const bad={observedOcrStrings:['BRAHD'],logoSimilarity:.5,silhouetteSimilarity:.7,colorSimilarity:.75,segmentationStability:.7,temporalConsistency:.65,flickerScore:.4,cameraAdherence:.4,productOccupancy:.15,promptAdherence:.7,aestheticScore:.8};
+
+test('candidate ranking puts approved brand-faithful output above prettier malformed output',()=>{const ranking=rankGenerationCandidates(identity,[{outputIndex:0,measurements:bad,aestheticScore:.95},{outputIndex:1,measurements:good,aestheticScore:.8}],{generationQC:{requireCameraAdherence:true}});assert.equal(ranking[0].outputIndex,1);assert.equal(ranking[0].approved,true);assert.equal(ranking[1].approved,false)});
+
+test('acceptance gate imports only approved selected outputs into project assets',()=>{const root=mkdtempSync(join(tmpdir(),'candidate-gate-')),stage=join(root,'stage'),assets=join(root,'assets');mkdirSync(stage);writeFileSync(join(stage,'bad.mp4'),'bad');writeFileSync(join(stage,'good.mp4'),'good');const request:GenerationRequest={id:'req',projectId:'p',kind:'video',prompt:'product shot',inputAssetIds:['source'],parameters:{}};const staged:StagedGenerationOutput={requestId:'req',provider:'local-video-http',model:'fixture',outputs:[{path:join(stage,'bad.mp4'),mediaType:'video/mp4',sha256:''},{path:join(stage,'good.mp4'),mediaType:'video/mp4',sha256:''}],usage:{costUsd:0}};try{const out=acceptRankedGenerationCandidates(request,staged,identity,[{outputIndex:0,measurements:bad},{outputIndex:1,measurements:good}],assets,{generationQC:{requireCameraAdherence:true},maxAccepted:1});assert.deepEqual(out.ranking.filter(x=>x.approved).map(x=>x.outputIndex),[1]);assert.equal(out.acceptance.assets.length,1);assert.equal(out.acceptance.record.outputAssetIds.length,1)}finally{rmSync(root,{recursive:true,force:true})}});
+
+test('acceptance gate refuses to import anything when all candidates violate identity',()=>{const root=mkdtempSync(join(tmpdir(),'candidate-reject-')),f=join(root,'bad.mp4');writeFileSync(f,'bad');const request:GenerationRequest={id:'req',projectId:'p',kind:'video',inputAssetIds:['source'],parameters:{}};const staged:StagedGenerationOutput={requestId:'req',provider:'local-video-http',model:'fixture',outputs:[{path:f,mediaType:'video/mp4',sha256:''}]};try{assert.throws(()=>acceptRankedGenerationCandidates(request,staged,identity,[{outputIndex:0,measurements:bad}],join(root,'assets')),/No generated candidate passed/i)}finally{rmSync(root,{recursive:true,force:true})}});
