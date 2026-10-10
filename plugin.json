@@ -1,0 +1,12 @@
+{
+  "name": "flicksmith",
+  "version": "0.5.0",
+  "description": "Agent-native professional video editing, generated scene assets, motion graphics, provenance, human-craft QC, and deterministic rendering for ChatGPT, Work, and Codex.",
+  "skills": "./skills/",
+  "mcpServers": "./mcp.json",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/flicksmith-setup/SKILL.md"
+    }
+  }
+}

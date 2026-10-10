@@ -1,4 +1,8 @@
-import type { AspectClass, SharedTransition } from '../../schema/src/v3/project.ts';
+import type { AspectClass, MotionLayer, SharedTransition } from '../../schema/src/v3/project.ts';
+import { animated,defaultMotionTransform } from '../../schema/src/v3/project.ts';
+import type { ProviderCapabilityManifest } from '../../generation/src/types.ts';
+import type { CoveragePlan } from './coverage.ts';
+import type { CreativeAction,CreativeActionPlan } from './actions.ts';
 
 export interface CreativeBrief {
   id:string; objective:string; audience:string; durationFrames:number; aspect:AspectClass;
@@ -50,4 +54,19 @@ export function validateDirectorPlan(input:DirectorPlan,catalog:DirectorReferenc
 }
 export function buildDirectorReceipt(scene:StoryboardScene):DirectorReceipt {
   return {sceneId:scene.id,intent:scene.rationale,purpose:scene.purpose,focus:scene.focus,constraints:[...scene.constraints],...(scene.componentId?{componentId:scene.componentId}:{}),...(scene.motionStyleId?{motionStyleId:scene.motionStyleId}:{})};
+}
+
+export interface BuildCreativeActionPlanInput{briefId:string;projectId:string;baseRevision:string;targetCompositionId:string;coverage:CoveragePlan;providerManifests:ProviderCapabilityManifest[];cta?:{beatId:string;text:string;layerId:string;start:number;duration:number}}
+function safeId(value:string){return value.replace(/[^A-Za-z0-9_-]+/g,'-')}
+export function buildCreativeActionPlan(input:BuildCreativeActionPlanInput):CreativeActionPlan{
+ const actions:CreativeAction[]=[],dependencies:Record<string,string[]>={};let cursor=0;
+ for(const beat of input.coverage.beats){
+  if(beat.primary){const id=`evidence-${safeId(beat.beatId)}`;actions.push({id,type:'place_evidence',beatId:beat.beatId,assetId:beat.primary.assetId,start:beat.primary.start,end:beat.primary.end,targetCompositionId:input.targetCompositionId,rationale:`Use existing source evidence for ${beat.role}; generation is unnecessary while suitable footage exists.`});dependencies[id]=[];cursor=Math.max(cursor,beat.primary.end-beat.primary.start);continue}
+  if(beat.role==='cta'||beat.generationEligibility==='forbidden')continue;
+  if(beat.generationEligibility==='required'||beat.generationEligibility==='allowed'){
+   const provider=input.providerManifests.find(p=>p.kinds.includes('image'));if(!provider)throw new Error(`No image generation provider can cover beat ${beat.beatId}`);const generateId=`generate-${safeId(beat.beatId)}`,sceneId=`scene-${safeId(beat.beatId)}`;actions.push({id:generateId,type:'generate_asset',beatId:beat.beatId,request:{id:`gen-${safeId(beat.beatId)}`,projectId:input.projectId,kind:'image',prompt:beat.query,inputAssetIds:[],parameters:{purpose:beat.role,coverageBeatId:beat.beatId},provider:provider.provider},rationale:`Generate only this genuine coverage gap because ${beat.generationReason??'no source evidence covers the beat'}.`});dependencies[generateId]=[];actions.push({id:sceneId,type:'build_generated_scene',beatId:beat.beatId,sourceActionId:generateId,rationale:`Convert the generated coverage gap for ${beat.beatId} into editable native FlickSmith layers instead of flattening it.`});dependencies[sceneId]=[generateId];
+  }
+ }
+ if(input.cta){const c=input.cta;const layer:MotionLayer={id:c.layerId,kind:'text',name:'CTA',start:c.start,duration:c.duration,enabled:true,locked:false,zIndex:1000,transform:{...defaultMotionTransform()},opacity:animated(1),effects:[],masks:[],motionBlur:false,text:c.text,textStyle:{fontSize:animated(72),horizontalAlign:'center'},props:{role:'cta',semanticPreserve:true}};const id=`native-cta-${safeId(c.beatId)}`;actions.push({id,type:'apply_motion',beatId:c.beatId,operation:{type:'add_motion_layer',compositionId:input.targetCompositionId,layer,intent:'Create native editable CTA'},rationale:'Critical CTA copy stays native editable text and is never baked into generated imagery.'});dependencies[id]=[]}
+ const qcId='final-qc';actions.push({id:qcId,type:'qc',scope:{compositionId:input.targetCompositionId},rationale:'Run final localized design and generated-scene QC before delivery.'});dependencies[qcId]=actions.filter(a=>a.id!==qcId).map(a=>a.id);return{version:1,briefId:input.briefId,baseRevision:input.baseRevision,actions,dependencies};
 }

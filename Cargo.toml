@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/flick-preview", "crates/flick-render-contract", "crates/flick-motion-runtime", "crates/flick-text", "crates/flick-render-core", "crates/flick-render-cpu", "crates/flick-render-wgpu", "crates/flick-render-cli", "crates/flick-tracking-opencv"]
+members = ["crates/flick-preview", "crates/flick-render-contract", "crates/flick-motion-runtime", "crates/flick-text", "crates/flick-render-core", "crates/flick-render-cpu", "crates/flick-render-wgpu", "crates/flick-render-cli", "crates/flick-tracking-opencv", "crates/flick-openfx-host"]
 
 [workspace.package]
 version = "0.4.0"

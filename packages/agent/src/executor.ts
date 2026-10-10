@@ -1,0 +1,23 @@
+import type { FlickProjectV3 } from '../../schema/src/v3/project.ts';
+import type { GenerationRuntime } from '../../generation/src/runtime.ts';
+import type { CreativeAction,CreativeActionPlan } from './actions.ts';
+
+export interface CreativeActionAdapterResult{revision:string;receipt:unknown}
+export interface CreativeExecutionAdapters{
+ searchMedia?:(action:Extract<CreativeAction,{type:'search_media'}>,revision:string)=>Promise<CreativeActionAdapterResult>|CreativeActionAdapterResult;
+ placeEvidence?:(action:Extract<CreativeAction,{type:'place_evidence'}>,revision:string)=>Promise<CreativeActionAdapterResult>|CreativeActionAdapterResult;
+ generateAsset?:(action:Extract<CreativeAction,{type:'generate_asset'}>,revision:string)=>Promise<CreativeActionAdapterResult>|CreativeActionAdapterResult;
+ buildGeneratedScene?:(action:Extract<CreativeAction,{type:'build_generated_scene'}>,revision:string)=>Promise<CreativeActionAdapterResult>|CreativeActionAdapterResult;
+ applyMotion?:(action:Extract<CreativeAction,{type:'apply_motion'}>,revision:string)=>Promise<CreativeActionAdapterResult>|CreativeActionAdapterResult;
+ createVariant?:(action:Extract<CreativeAction,{type:'create_variant'}>,revision:string)=>Promise<CreativeActionAdapterResult>|CreativeActionAdapterResult;
+ qc?:(action:Extract<CreativeAction,{type:'qc'}>,revision:string)=>Promise<CreativeActionAdapterResult>|CreativeActionAdapterResult;
+ repair?:(action:Extract<CreativeAction,{type:'repair'}>,revision:string)=>Promise<CreativeActionAdapterResult>|CreativeActionAdapterResult;
+}
+export interface CreativeExecutionContext{project:FlickProjectV3;revision:string;generation:GenerationRuntime;adapters:CreativeExecutionAdapters}
+export interface CreativeExecutionReceipt{briefId:string;baseRevision:string;projectRevision:string;completedActionIds:string[];actionReceipts:Record<string,unknown>;failedActionId?:string;error?:string}
+function order(plan:CreativeActionPlan):CreativeAction[]{const by=new Map(plan.actions.map(a=>[a.id,a])),done=new Set<string>(),out:CreativeAction[]=[];while(out.length<plan.actions.length){let progressed=false;for(const action of plan.actions){if(done.has(action.id))continue;if((plan.dependencies[action.id]??[]).every(d=>done.has(d))){out.push(action);done.add(action.id);progressed=true}}if(!progressed)throw new Error('Creative action dependency cycle')}return out}
+function adapterFor(adapters:CreativeExecutionAdapters,action:CreativeAction){switch(action.type){case'search_media':return adapters.searchMedia;case'place_evidence':return adapters.placeEvidence;case'generate_asset':return adapters.generateAsset;case'build_generated_scene':return adapters.buildGeneratedScene;case'apply_motion':return adapters.applyMotion;case'create_variant':return adapters.createVariant;case'qc':return adapters.qc;case'repair':return adapters.repair}}
+export class CreativePlanExecutor{
+ async execute(plan:CreativeActionPlan,context:CreativeExecutionContext,signal?:AbortSignal,seed?:CreativeExecutionReceipt):Promise<CreativeExecutionReceipt>{const completed=[...(seed?.completedActionIds??[])],completedSet=new Set(completed),receipts={...(seed?.actionReceipts??{})};let revision=seed?.projectRevision??context.revision;for(const action of order(plan)){if(completedSet.has(action.id))continue;if(signal?.aborted)return{briefId:plan.briefId,baseRevision:plan.baseRevision,projectRevision:revision,completedActionIds:completed,actionReceipts:receipts,failedActionId:action.id,error:'aborted'};const adapter=adapterFor(context.adapters,action);if(!adapter)return{briefId:plan.briefId,baseRevision:plan.baseRevision,projectRevision:revision,completedActionIds:completed,actionReceipts:receipts,failedActionId:action.id,error:`No executor adapter for ${action.type}`};try{const result=await (adapter as any)(action,revision);revision=result.revision;receipts[action.id]=result.receipt;completed.push(action.id);completedSet.add(action.id)}catch(error){return{briefId:plan.briefId,baseRevision:plan.baseRevision,projectRevision:revision,completedActionIds:completed,actionReceipts:receipts,failedActionId:action.id,error:error instanceof Error?error.message:String(error)}}}return{briefId:plan.briefId,baseRevision:plan.baseRevision,projectRevision:revision,completedActionIds:completed,actionReceipts:receipts}}
+ resume(plan:CreativeActionPlan,partial:CreativeExecutionReceipt,context:CreativeExecutionContext,signal?:AbortSignal){return this.execute(plan,{...context,revision:partial.projectRevision},signal,partial)}
+}

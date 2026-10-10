@@ -34,3 +34,5 @@ export function compileAudioProcessor(e:AudioEffectInstance):string {
 }
 export function compileAudioBusChain(bus:AudioBus):string { const parts=bus.effects.filter(e=>e.enabled&&e.type!=='ducking').map(compileAudioProcessor); if(bus.gainDb!==0)parts.push(`volume=${bus.gainDb}dB`); if(bus.pan!==0)parts.push(compileAudioProcessor({id:'pan',type:'pan',enabled:true,params:{pan:bus.pan}})); return parts.join(',')||'anull'; }
 export function dbToLinear(db:number):number{return dbLinear(db);}
+
+export * from './automation.ts';
