@@ -13,7 +13,7 @@ pub fn apply_pixel_local(effect: &Effect, p: LinearRgba, x: u32, y: u32) -> Line
                 r * matrix[10] + g * matrix[11] + b * matrix[12] + a * matrix[13] + matrix[14],
                 r * matrix[15] + g * matrix[16] + b * matrix[17] + a * matrix[18] + matrix[19],
             ];
-            LinearRgba::new_straight(o[0], o[1], o[2], o[3])
+            LinearRgba::from_unpremultiplied(o[0], o[1], o[2], o[3])
         }
         Effect::Grain { amount, seed } => {
             let n =
