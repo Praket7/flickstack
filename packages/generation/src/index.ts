@@ -9,4 +9,5 @@ export * from './providers/openai-image.ts';
 export * from './providers/qwen-layered-http.ts';
 export * from './providers/depth-http.ts';
 export * from './providers/segmentation-http.ts';
+export * from './providers/local-image-edit-http.ts';
 export * from './providers/local-video-http.ts';
