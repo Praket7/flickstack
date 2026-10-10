@@ -19,7 +19,7 @@ const extraTools: McpTool[] = [
   { name:'build_craft_direction', description:'Build a brand-specific human-crafted visual and sound grammar that explicitly rejects generic AI-ad defaults.', inputSchema:{ type:'object', required:['brand','audience','objective'], properties:{ brand:{type:'string'}, audience:{type:'string'}, objective:{type:'string'}, references:{type:'array',items:{type:'string'}} }, additionalProperties:false } },
   { name:'review_human_craft', description:'Score an edit for template repetition, decorative motion, transition spam, mechanical pacing, generic typography, weak sound design, and lack of brand-specific decisions.', inputSchema:{ type:'object', required:['shots','typographyStyles','soundEvents','brandSpecificChoices'], properties:{ shots:{type:'array',items:{type:'object'}}, typographyStyles:{type:'array',items:{type:'string'}}, soundEvents:{type:'array',items:{type:'string'}}, brandSpecificChoices:{type:'number'} }, additionalProperties:false } },
   { name:'create_creative_action_plan', description:'Create an evidence-first creative action plan. Existing source media is preferred; generation is used only for justified coverage gaps.', inputSchema:{ type:'object', required:['input'], properties:{ input:{type:'object'} }, additionalProperties:false } },
-  { name:'validate_creative_plan', description:'Validate a declarative creative action plan and reject cycles, executable payloads, unsafe generation rationale, or invalid dependencies.', inputSchema:{ type:'object', required:['plan'], properties:{ plan:{type:'object'} }, additionalProperties:false } },
+  { name:'validate_creative_plan', description:'Validate a declarative creative action plan and reject cycles, executable payloads, unsafe generation rationale, or invalid dependencies.', inputSchema:{ type:'object', required:['plan','context'], properties:{ plan:{type:'object'}, context:{type:'object'} }, additionalProperties:false } },
   { name:'plan_campaign_variants', description:'Plan responsive campaign variants that preserve semantic/locked layers and reuse existing assets by default.', inputSchema:{ type:'object', required:['input'], properties:{ input:{type:'object'} }, additionalProperties:false } },
   { name:'map_qc_repairs', description:'Map QC failures to localized declarative repair actions instead of global regeneration.', inputSchema:{ type:'object', required:['issues'], properties:{ issues:{type:'array',items:{type:'object'}}, allowRegeneration:{type:'boolean'} }, additionalProperties:false } },
 ];
@@ -33,6 +33,15 @@ function mediaType(path: string): string {
   }
 }
 function loadProject() { return parseProjectV3(JSON.parse(readFileSync(projectPath,'utf8'))); }
+function creativeValidationContext(input: any) {
+  return {
+    assetIds: new Set<string>(Array.isArray(input?.assetIds) ? input.assetIds.map(String) : []),
+    compositionIds: new Set<string>(Array.isArray(input?.compositionIds) ? input.compositionIds.map(String) : []),
+    beatIds: new Set<string>(Array.isArray(input?.beatIds) ? input.beatIds.map(String) : []),
+    motionStyleIds: new Set<string>(Array.isArray(input?.motionStyleIds) ? input.motionStyleIds.map(String) : []),
+    providers: Array.isArray(input?.providers) ? input.providers : [],
+  };
+}
 
 let scheduler: JobScheduler | undefined;
 let generation: GenerationRuntime | undefined;
@@ -55,7 +64,7 @@ async function callTool(name: string, args: any): Promise<unknown> {
   if (name === 'build_craft_direction') return buildCraftDirection(args);
   if (name === 'review_human_craft') return evaluateHumanCraft(args);
   if (name === 'create_creative_action_plan') return buildCreativeActionPlan(args.input);
-  if (name === 'validate_creative_plan') return validateCreativeActionPlan(args.plan);
+  if (name === 'validate_creative_plan') return validateCreativeActionPlan(args.plan, creativeValidationContext(args.context));
   if (name === 'plan_campaign_variants') return planResponsiveVariants(loadProject(), args.input);
   if (name === 'map_qc_repairs') return planRepairs(args.issues, loadProject(), { allowRegeneration: args.allowRegeneration === true });
 
