@@ -15,6 +15,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.90.0
         with:
           components: clippy
+      - name: Install native Rust dependencies
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libfontconfig1-dev
       - name: Capture clippy diagnostics
         run: |
           set +e
