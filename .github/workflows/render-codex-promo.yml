@@ -38,12 +38,15 @@ jobs:
         run: node --experimental-strip-types apps/cli/src/index.ts qc examples/codex-promo/out/Codex_Usage_Promo_42s.mp4 --project examples/codex-promo/project.flick.json > examples/codex-promo/out/QC.json
       - name: Inspect deliverable
         run: ffprobe -v error -show_entries format=duration,size:stream=codec_name,width,height,r_frame_rate -of json examples/codex-promo/out/Codex_Usage_Promo_42s.mp4 > examples/codex-promo/out/ffprobe.json
+      - name: Build visual contact sheet
+        run: ffmpeg -y -i examples/codex-promo/out/Codex_Usage_Promo_42s.mp4 -vf "fps=1/5,scale=480:-1,tile=3x3:padding=8:margin=8" -frames:v 1 examples/codex-promo/out/contact-sheet.jpg
       - name: Upload promo artifact
         uses: actions/upload-artifact@v4
         with:
           name: codex-usage-promo-42s
           path: |
             examples/codex-promo/out/Codex_Usage_Promo_42s.mp4
+            examples/codex-promo/out/contact-sheet.jpg
             examples/codex-promo/out/QC.json
             examples/codex-promo/out/ffprobe.json
             examples/codex-promo/out/render-manifest.json
