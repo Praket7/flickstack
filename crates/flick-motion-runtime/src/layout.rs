@@ -1,4 +1,6 @@
+use crate::animation::Vec3;
 use serde_json::Value;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Surface {
     pub width: f64,
@@ -43,4 +45,34 @@ pub fn layout_offset(layer: &Value, variants: Option<&Vec<Value>>, surface: Surf
         }
     }
     [x, y]
+}
+
+pub fn resolve(
+    mut pos: Vec3,
+    width: f64,
+    height: f64,
+    safe: [f64; 4],
+    constraints: Option<&Value>,
+) -> Vec3 {
+    let Some(cs) = constraints.and_then(Value::as_array) else {
+        return pos;
+    };
+    let [l, t, r, b] = safe;
+    let safe_width = width - l - r;
+    let safe_height = height - t - b;
+    for c in cs {
+        let value = c.get("value").and_then(Value::as_f64).unwrap_or(0.0);
+        match c.get("type").and_then(Value::as_str).unwrap_or("") {
+            "pin-left" => pos[0] += l + value,
+            "pin-right" => pos[0] += width - r - value,
+            "pin-top" => pos[1] += t + value,
+            "pin-bottom" => pos[1] += height - b - value,
+            "center-x" => pos[0] += l + safe_width / 2.0 + value,
+            "center-y" => pos[1] += t + safe_height / 2.0 + value,
+            "scale-with-width" => pos[0] *= safe_width / 1920.0,
+            "scale-with-height" => pos[1] *= safe_height / 1080.0,
+            _ => {}
+        }
+    }
+    pos
 }
