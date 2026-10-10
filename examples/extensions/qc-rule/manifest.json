@@ -1,0 +1,10 @@
+{
+  "id": "example.flicksmith-qc",
+  "name": "Example FlickSmith QC",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "kinds": ["qc-rule"],
+  "entry": "dist/index.js",
+  "permissions": ["read-project-assets"],
+  "capabilities": {"rules": ["brand-safe-area"]}
+}
