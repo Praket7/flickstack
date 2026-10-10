@@ -1,6 +1,8 @@
 mod ffmpeg;
+#[allow(dead_code)]
 mod media;
 mod render;
+#[allow(unused_imports, clippy::iter_nth_zero)]
 mod scene_bridge;
 use ffmpeg::RawEncoder;
 use render::{Backend, HeadlessRenderer};
@@ -33,7 +35,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                 .parse::<u32>()?;
             let out = value(&args, "--output").ok_or("--output required")?;
             let f = renderer.frame(n)?;
-            fs::write(out, &f.to_srgba8())?;
+            fs::write(out, f.to_srgba8())?;
         }
         "render" => {
             let out = value(&args, "--output").ok_or("--output required")?;
