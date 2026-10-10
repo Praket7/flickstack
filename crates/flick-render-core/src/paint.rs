@@ -66,8 +66,7 @@ impl Paint {
                 stops,
             } => sample_stops(
                 stops,
-                ((x - center[0]).powi(2) + (y - center[1]).powi(2)).sqrt()
-                    / radius.max(1e-6),
+                ((x - center[0]).powi(2) + (y - center[1]).powi(2)).sqrt() / radius.max(1e-6),
             ),
         }
     }
