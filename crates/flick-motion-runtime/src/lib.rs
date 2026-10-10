@@ -173,7 +173,8 @@ fn sample_audio(program: &RenderProgramV1, frame: f64) -> [f64; 4] {
         return [0.0; 4];
     };
     let envelopes = analysis.get("envelopes").unwrap_or(&Value::Null);
-    ["energy", "low", "mid", "high"].map(|signal| sample_envelope(envelopes.get(signal), frame))
+    ["energy", "low", "mid", "high"]
+        .map(|signal| sample_envelope(envelopes.get(signal), frame))
 }
 
 pub struct MotionRuntime {
