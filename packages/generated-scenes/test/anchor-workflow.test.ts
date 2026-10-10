@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {buildLocalAnchorWorkflow,buildLocalInterpolationRequest} from '../src/index.ts';
+
+test('local anchor workflow emits free local image-edit requests for sparse anchors',()=>{const p=buildLocalAnchorWorkflow({projectId:'p',sourceAssetId:'front',referenceAssetIds:['side'],prompt:'premium product orbit',durationFrames:97,targetSpacingFrames:24,maxAnchors:5,hardwareProfile:'standard-gpu',imageWidth:1280,imageHeight:720});assert.equal(p.anchorFrames[0],0);assert.equal(p.anchorFrames.at(-1),96);assert.equal(p.anchorRequests.length,p.anchorFrames.length-1);assert.ok(p.anchorRequests.every(r=>r.kind==='image-edit'));assert.ok(p.anchorRequests.every(r=>r.inputAssetIds.includes('front')&&r.inputAssetIds.includes('side')));assert.ok(p.anchorRequests.every(r=>r.parameters.candidateCount===2))});
+
+test('interpolation request carries typed first last reference camera and candidate controls',()=>{const r=buildLocalInterpolationRequest({projectId:'p',requestId:'video',prompt:'controlled 20 degree orbit',firstAnchorAssetId:'a0',lastAnchorAssetId:'a1',referenceAssetIds:['side'],durationSeconds:4,resolution:'720p',aspectRatio:'16:9',camera:{orbitDegrees:20},hardwareProfile:'high-vram',candidateCount:6,seed:42});assert.equal(r.kind,'video');assert.equal(r.video?.firstFrameAssetId,'a0');assert.equal(r.video?.lastFrameAssetId,'a1');assert.deepEqual(r.video?.referenceAssetIds,['side']);assert.equal(r.video?.candidateCount,6);assert.equal(r.seed,42)});
