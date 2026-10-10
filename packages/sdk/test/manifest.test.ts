@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {assertPermission,parseExtensionManifest} from '../src/index.ts';
+const base={id:'demo.effect',name:'Demo',version:'1.0.0',apiVersion:1 as const,kinds:['effect'] as const,entry:'dist/index.js',permissions:['gpu'] as const,capabilities:{formats:['rgba8']}};
+test('parses safe manifest and enforces grants',()=>{const m=parseExtensionManifest(base as any);assert.equal(m.id,'demo.effect');assert.doesNotThrow(()=>assertPermission(m,{extensionId:m.id,permissions:['gpu']},'gpu'));assert.throws(()=>assertPermission(m,{extensionId:m.id,permissions:[]},'gpu'))});
+test('rejects traversal and executable capability fields',()=>{assert.throws(()=>parseExtensionManifest({...base,entry:'../x.js'} as any));assert.throws(()=>parseExtensionManifest({...base,capabilities:{command:'rm'}} as any))});
