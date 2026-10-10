@@ -1,26 +1,48 @@
 error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/behaviors.rs:6:542
+ --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/layout.rs:3:80
   |
-6 | ...e+noise(n(b.get("seed"),c.seed),c.frame*n(params.get("frequency"),.1))*n(params.get("amplitude"),n(params.get("amount"),1.0)),"audio-r...
-  |                                                                      ^^
+3 | pub fn aspect(s:Surface)->&'static str{let r=s.width/s.height;if(r-1.0).abs()<=.03{"square"}else if(r-.8).abs()<=.035{"four-five"}else if...
+  |                                                                                ^^^
   |
 help: must have an integer part
   |
-6 | pub fn apply_number(mut base:f64,behaviors:Option<&Vec<Value>>,c:BehaviorContext)->f64{for b in behaviors.into_iter().flatten(){if b.get("enabled").and_then(Value::as_bool)==Some(false){continue}let kind=b.get("type").and_then(Value::as_str).unwrap_or("");let params=b.get("params").unwrap_or(&Value::Null);let q=p(c);base=match kind{"fade"=>{let from=n(params.get("from"),0.0);from+(n(params.get("to"),base)-from)*q},"drift"=>base+n(params.get("amount"),1.0)*q,"wiggle"=>base+noise(n(b.get("seed"),c.seed),c.frame*n(params.get("frequency"),0.1))*n(params.get("amplitude"),n(params.get("amount"),1.0)),"audio-react"=>{let sig=params.get("signal").and_then(Value::as_str).unwrap_or("energy");let a=match sig{"low"=>c.low,"mid"=>c.mid,"high"=>c.high,_=>c.energy};base+a*n(params.get("amount"),1.0)},_=>base};}base}
-  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              +
+3 | pub fn aspect(s:Surface)->&'static str{let r=s.width/s.height;if(r-1.0).abs()<=0.03{"square"}else if(r-.8).abs()<=.035{"four-five"}else if r>=1.2{"landscape"}else if r<=.75{"portrait"}else{"custom"}}
+  |                                                                                +
 
 error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/behaviors.rs:7:665
+ --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/layout.rs:3:103
   |
-7 | ...et("amplitude"),[10.0,10.0,10.0]);let f=n(params.get("frequency"),.1);let seed=n(b.get("seed"),c.seed);[base[0]+noise(seed,c.frame*f)*...
-  |                                                                      ^^
+3 | pub fn aspect(s:Surface)->&'static str{let r=s.width/s.height;if(r-1.0).abs()<=.03{"square"}else if(r-.8).abs()<=.035{"four-five"}else if...
+  |                                                                                                       ^^
   |
 help: must have an integer part
   |
-7 | pub fn apply_vec3(mut base:Vec3,behaviors:Option<&Vec<Value>>,c:BehaviorContext)->Vec3{for b in behaviors.into_iter().flatten(){if b.get("enabled").and_then(Value::as_bool)==Some(false){continue}let kind=b.get("type").and_then(Value::as_str).unwrap_or("");let params=b.get("params").unwrap_or(&Value::Null);let q=p(c);base=match kind{"slide"=>{let from=v3(params.get("from"),[0.0,0.0,0.0]);[base[0]+from[0]*(1.0-q),base[1]+from[1]*(1.0-q),base[2]+from[2]*(1.0-q)]},"drift"=>{let d=v3(params.get("offset"),[0.0,0.0,0.0]);[base[0]+d[0]*q,base[1]+d[1]*q,base[2]+d[2]*q]},"wiggle"=>{let amp=v3(params.get("amplitude"),[10.0,10.0,10.0]);let f=n(params.get("frequency"),0.1);let seed=n(b.get("seed"),c.seed);[base[0]+noise(seed,c.frame*f)*amp[0],base[1]+noise(seed+1.0,c.frame*f)*amp[1],base[2]+noise(seed+2.0,c.frame*f)*amp[2]]},"audio-react"=>{let sig=params.get("signal").and_then(Value::as_str).unwrap_or("energy");let a=match sig{"low"=>c.low,"mid"=>c.mid,"high"=>c.high,_=>c.energy};let amount=v3(params.get("amount"),[1.0,1.0,1.0]);[base[0]+a*amount[0],base[1]+a*amount[1],base[2]+a*amount[2]]},_=>base};}base}
-  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         +
+3 | pub fn aspect(s:Surface)->&'static str{let r=s.width/s.height;if(r-1.0).abs()<=.03{"square"}else if(r-0.8).abs()<=.035{"four-five"}else if r>=1.2{"landscape"}else if r<=.75{"portrait"}else{"custom"}}
+  |                                                                                                       +
 
-Error writing files: failed to resolve mod `behaviors`: cannot parse /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/behaviors.rs
+error: float literals must have an integer part
+ --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/layout.rs:3:114
+  |
+3 | pub fn aspect(s:Surface)->&'static str{let r=s.width/s.height;if(r-1.0).abs()<=.03{"square"}else if(r-.8).abs()<=.035{"four-five"}else if...
+  |                                                                                                                  ^^^^
+  |
+help: must have an integer part
+  |
+3 | pub fn aspect(s:Surface)->&'static str{let r=s.width/s.height;if(r-1.0).abs()<=.03{"square"}else if(r-.8).abs()<=0.035{"four-five"}else if r>=1.2{"landscape"}else if r<=.75{"portrait"}else{"custom"}}
+  |                                                                                                                  +
+
+error: float literals must have an integer part
+ --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/layout.rs:3:169
+  |
+3 | ...8).abs()<=.035{"four-five"}else if r>=1.2{"landscape"}else if r<=.75{"portrait"}else{"custom"}}
+  |                                                                     ^^^
+  |
+help: must have an integer part
+  |
+3 | pub fn aspect(s:Surface)->&'static str{let r=s.width/s.height;if(r-1.0).abs()<=.03{"square"}else if(r-.8).abs()<=.035{"four-five"}else if r>=1.2{"landscape"}else if r<=0.75{"portrait"}else{"custom"}}
+  |                                                                                                                                                                         +
+
+Error writing files: failed to resolve mod `layout`: cannot parse /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/layout.rs
 error: float literals must have an integer part
    --> /home/runner/work/flickstack/flickstack/crates/flick-render-cli/src/scene_bridge.rs:137:192
     |
