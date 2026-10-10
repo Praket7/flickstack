@@ -14,19 +14,19 @@ test('native renderer crates share the current EvaluatedScene and RenderError co
 
   assert.match(core, /Invalid\(String\)/, 'RenderError must represent invalid native program/state');
   assert.match(core, /Device\(String\)/, 'RenderError must represent GPU device failures');
-  assert.match(scene, /pub layers:Vec<SceneLayer>/);
-  assert.match(scene, /pub fonts:Vec<FontResource>/);
+  assert.match(scene, /pub\s+layers:\s*Vec<SceneLayer>/);
+  assert.match(scene, /pub\s+fonts:\s*Vec<FontResource>/);
   for (const source of [gpu, layers, passes, parity]) {
     assert.doesNotMatch(source, /\bdraws\s*:/, 'stale v0.3 draw-list field must not survive');
     assert.doesNotMatch(source, /\.draws\b/, 'stale v0.3 draw-list accessor must not survive');
   }
-  assert.match(gpu, /layers:vec!\[\]/);
-  assert.match(gpu, /fonts:vec!\[\]/);
+  assert.match(gpu, /layers:\s*vec!\[\]/);
+  assert.match(gpu, /fonts:\s*vec!\[\]/);
 });
 
 test('GPU renderer cannot silently call the CPU renderer when a GPU device exists', () => {
   const gpu = read('crates/flick-render-wgpu/src/lib.rs');
   assert.doesNotMatch(gpu, /Until individual draw pass support is complete/);
   assert.match(gpu, /render_scene_gpu/);
-  assert.match(gpu, /if self\.device\.is_none\(\)\{return self\.cpu\.render/);
+  assert.match(gpu, /if\s+self\.device\.is_none\(\)\s*\{\s*return\s+self\.cpu\.render/);
 });
