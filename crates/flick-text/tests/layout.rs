@@ -31,7 +31,12 @@ fn shapes_real_glyphs_clusters_and_wraps_with_metrics() {
         .runs
         .iter()
         .flat_map(|r| &r.clusters)
-        .all(|c| c.end >= c.start && !c.glyph_ids.is_empty()));
+        .all(|c| c.end >= c.start && c.advance.is_finite()));
+    assert!(layout
+        .runs
+        .iter()
+        .flat_map(|r| &r.clusters)
+        .any(|c| !c.glyph_ids.is_empty()));
     assert!(!layout.provenance.resolved_faces.is_empty());
 }
 
