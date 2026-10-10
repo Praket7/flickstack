@@ -129,7 +129,7 @@ fn regex_and_seeded_selectors_are_deterministic() {
         opacity: 0.25,
         ..Default::default()
     };
-    let x = build_text_instances(&layout(), &[a.clone()]);
+    let x = build_text_instances(&layout(), std::slice::from_ref(&a));
     let y = build_text_instances(&layout(), &[a]);
     assert_eq!(x, y);
     assert_eq!(x[2].opacity, 0.25);
