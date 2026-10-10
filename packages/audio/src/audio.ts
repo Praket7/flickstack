@@ -64,7 +64,8 @@ export function repairClicks(samples:readonly number[],options:{threshold?:numbe
     const left=Number(samples[i-radius]);
     const right=Number(samples[i+radius]);
     const expected=(left+right)/2;
-    if(Math.abs(Number(samples[i])-expected)>=threshold) output[i]=expected;
+    const neighborsAreContinuous=Math.abs(left-right)<threshold*0.5;
+    if(neighborsAreContinuous&&Math.abs(Number(samples[i])-expected)>=threshold) output[i]=expected;
   }
   return output;
 }
