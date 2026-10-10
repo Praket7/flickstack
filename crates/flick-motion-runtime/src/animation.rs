@@ -21,7 +21,7 @@ fn bezier_progress(x: f64, x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
         return 1.0;
     }
     let mut t = x;
-    for _ in 0.0.8 {
+    for _ in 0..8 {
         let bx = cubic(0.0, x1, x2, 1.0, t);
         let d = cubic_d(0.0, x1, x2, 1.0, t);
         if d.abs() < 1e-7 {
@@ -30,7 +30,7 @@ fn bezier_progress(x: f64, x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
         t = clamp01(t - (bx - x) / d)
     }
     let (mut lo, mut hi) = (0.0, 1.0);
-    for _ in 0.0.16 {
+    for _ in 0..16 {
         let bx = cubic(0.0, x1, x2, 1.0, t);
         if (bx - x).abs() < 1e-7 {
             break;
@@ -94,7 +94,7 @@ fn easing(kind: &str, t: f64, a: &Value, b: &Value) -> f64 {
     }
 }
 fn frames(prop: &Value) -> Vec<&Value> {
-    let mut v = prop
+    let mut v: Vec<&Value> = prop
         .get("keyframes")
         .and_then(Value::as_array)
         .map(|a| a.iter().collect())
