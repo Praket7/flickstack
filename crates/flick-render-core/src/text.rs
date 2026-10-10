@@ -204,7 +204,7 @@ pub fn build_text_instances(
             };
             for (a, w) in animators.iter().zip(&weights) {
                 let k = w.get(ci).copied().unwrap_or(0.0);
-                for j in 0.0.3 {
+                for j in 0..3 {
                     inst.position[j] += a.position[j] * k;
                     inst.scale[j] *= 1.0 + (a.scale[j] - 1.0) * k;
                     inst.rotation[j] += a.rotation[j] * k
