@@ -3,7 +3,7 @@ use crate::{
     TrackStatus, TrackingError, Vec2, VideoInput,
 };
 use opencv::{
-    core::{self, Mat, Point2f, Size, TermCriteria, TermCriteria_Type, Vector},
+    core::{Mat, Point2f, Size, TermCriteria, TermCriteria_Type, Vector},
     features2d::{self, Feature2DTrait, ORB},
     imgproc,
     prelude::*,
@@ -77,7 +77,7 @@ fn lk(
     point: Point2f,
     options: PointTrackOptions,
 ) -> Result<(Point2f, bool, f64), TrackingError> {
-    let prev_pts = Vector::from_iter([point]);
+    let prev_pts: Vector<Point2f> = Vector::from_iter([point]);
     let mut next_pts = Vector::<Point2f>::new();
     let mut status = Vector::<u8>::new();
     let mut err = Vector::<f32>::new();
