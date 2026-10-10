@@ -1,119 +1,32 @@
-export interface CraftDirectionInput {
-  brand: string;
-  audience: string;
-  objective: string;
-  references?: string[];
-}
+export interface CraftDirectionInput {brand:string;audience:string;objective:string;references?:string[]}
+export interface CraftDirection {brand:string;audience:string;objective:string;references:string[];forbidGenericAiAesthetic:true;rules:string[]}
+export type NarrativeStage='setup'|'development'|'turn'|'proof'|'resolve';
+export interface CraftShot {durationFrames:number;transition:string;cameraMove:string;purpose:string;narrativeStage?:NarrativeStage;lensLogic?:string;lightingLogic?:string;screenDirection?:string}
+export interface HumanCraftInput {shots:CraftShot[];typographyStyles:string[];soundEvents:string[];brandSpecificChoices:number;visualEventFrames?:number[];audioCueFrames?:number[];continuityBreaks?:number;authenticEvidenceRatio?:number}
+export type CraftIssueCode='template-repetition'|'unmotivated-motion'|'transition-spam'|'pacing-monotony'|'typography-template'|'weak-sound-design'|'generic-brand-language'|'narrative-flatness'|'audiovisual-desync'|'continuity-risk'|'synthetic-evidence-overuse';
+export interface CraftIssue {code:CraftIssueCode;severity:'warning'|'error';message:string;repair:string}
+export interface HumanCraftReport {score:number;issues:CraftIssue[];metrics:{durationVariation:number;nonCutTransitionRatio:number;repeatedPatternRatio:number;soundEventsPerShot:number;brandSpecificChoices:number;narrativeStageCount:number;audiovisualSyncFrames?:number;continuityBreaks:number;authenticEvidenceRatio?:number}}
+export interface CraftRepair {issue:CraftIssueCode;priority:number;action:string;scope:'shot'|'sequence'|'audio'|'typography'|'brand'|'evidence'}
 
-export interface CraftDirection {
-  brand: string;
-  audience: string;
-  objective: string;
-  references: string[];
-  forbidGenericAiAesthetic: true;
-  rules: string[];
-}
-
-export interface CraftShot {
-  durationFrames: number;
-  transition: string;
-  cameraMove: string;
-  purpose: string;
-}
-
-export interface HumanCraftInput {
-  shots: CraftShot[];
-  typographyStyles: string[];
-  soundEvents: string[];
-  brandSpecificChoices: number;
-}
-
-export interface CraftIssue {
-  code: 'template-repetition' | 'unmotivated-motion' | 'transition-spam' | 'pacing-monotony' | 'typography-template' | 'weak-sound-design' | 'generic-brand-language';
-  severity: 'warning' | 'error';
-  message: string;
-  repair: string;
-}
-
-export interface HumanCraftReport {
-  score: number;
-  issues: CraftIssue[];
-  metrics: {
-    durationVariation: number;
-    nonCutTransitionRatio: number;
-    repeatedPatternRatio: number;
-    soundEventsPerShot: number;
-    brandSpecificChoices: number;
-  };
-}
-
-export function buildCraftDirection(input: CraftDirectionInput): CraftDirection {
-  for (const key of ['brand', 'audience', 'objective'] as const) if (!input[key]?.trim()) throw new Error(`${key} is required`);
-  return {
-    ...input,
-    references: [...(input.references ?? [])],
-    forbidGenericAiAesthetic: true,
-    rules: [
-      'Every camera move must be motivated by subject, story, reveal, or emotional emphasis; motion is not decoration.',
-      'Build a brand-specific visual grammar from references, product geometry, audience, and message instead of a universal AI-ad look.',
-      'Prefer editorial cuts, match cuts, motivated wipes, and physical transitions; avoid transition spam and repeated zoom/push presets.',
-      'Vary shot duration by narrative function and performance rather than mechanically equal beats.',
-      'Typography must follow an authored hierarchy and grid; keep critical copy native and avoid generic centered bold captions.',
-      'sound design must carry room tone, tactile foley, transitions, dynamics, and purposeful silence instead of music-only coverage.',
-      'Preserve believable imperfections when they communicate material, camera, performance, or environment; never add random jitter as fake humanity.',
-      'Use generation to solve a specific coverage problem, not to replace available authentic footage by default.',
-      'Require continuity of lighting, lens logic, screen direction, product geometry, and action across adjacent shots.',
-      'Finish with a human-craft review that can reject technically valid edits for weak taste, repetition, or generic styling.',
-    ],
-  };
-}
-
-const ratio = (n: number, d: number) => d <= 0 ? 0 : n / d;
-
-export function evaluateHumanCraft(input: HumanCraftInput): HumanCraftReport {
-  const issues: CraftIssue[] = [];
-  const shots = input.shots;
-  if (!shots.length) return { score: 0, issues: [{ code: 'generic-brand-language', severity: 'error', message: 'No authored shots exist.', repair: 'Create a shot plan with explicit narrative purposes.' }], metrics: { durationVariation: 0, nonCutTransitionRatio: 0, repeatedPatternRatio: 0, soundEventsPerShot: 0, brandSpecificChoices: input.brandSpecificChoices } };
-
-  const durations = shots.map((shot) => shot.durationFrames);
-  const mean = durations.reduce((a, b) => a + b, 0) / durations.length;
-  const variance = durations.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / durations.length;
-  const durationVariation = mean > 0 ? Math.sqrt(variance) / mean : 0;
-  const nonCutTransitionRatio = ratio(shots.filter((shot) => shot.transition !== 'cut').length, shots.length);
-  const patterns = new Map<string, number>();
-  for (const shot of shots) {
-    const key = `${shot.transition}|${shot.cameraMove}|${shot.purpose}`;
-    patterns.set(key, (patterns.get(key) ?? 0) + 1);
-  }
-  const repeatedPatternRatio = ratio(Math.max(...patterns.values()), shots.length);
-  const moving = shots.filter((shot) => shot.cameraMove !== 'static');
-  const movingKinds = new Set(moving.map((shot) => shot.cameraMove));
-  const purposeKinds = new Set(shots.map((shot) => shot.purpose));
-  const soundEventsPerShot = ratio(input.soundEvents.length, shots.length);
-
-  if (shots.length >= 3 && repeatedPatternRatio >= 0.66) issues.push({ code: 'template-repetition', severity: 'error', message: 'The same transition, camera move, and shot purpose repeats like a template.', repair: 'Re-author shot functions first, then choose motion and transitions that serve each function.' });
-  if (moving.length >= 3 && movingKinds.size === 1 && purposeKinds.size <= 1) issues.push({ code: 'unmotivated-motion', severity: 'error', message: 'Camera motion repeats without changing narrative purpose.', repair: 'Remove decorative movement and motivate each move from subject or story.' });
-  if (nonCutTransitionRatio > 0.5) issues.push({ code: 'transition-spam', severity: 'warning', message: 'More than half of edits use visible transitions.', repair: 'Default to cuts and reserve visible transitions for semantic or physical motivation.' });
-  if (shots.length >= 3 && durationVariation < 0.12) issues.push({ code: 'pacing-monotony', severity: 'warning', message: 'Shot lengths are mechanically uniform.', repair: 'Shape duration around information density, performance, anticipation, and release.' });
-  if (input.typographyStyles.length >= 3 && new Set(input.typographyStyles).size <= 1) issues.push({ code: 'typography-template', severity: 'warning', message: 'Typography repeats one generic treatment.', repair: 'Create an intentional hierarchy with brand-specific alignment, scale, rhythm, and restraint.' });
-  if (soundEventsPerShot < 0.5) issues.push({ code: 'weak-sound-design', severity: 'error', message: 'The cut lacks enough authored sonic events to support picture rhythm and materiality.', repair: 'Add selective foley, ambience, accents, dynamics, and silence tied to picture events.' });
-  if (input.brandSpecificChoices < 2) issues.push({ code: 'generic-brand-language', severity: 'error', message: 'Too few decisions are specific to this brand, product, or audience.', repair: 'Derive palette, type, motion, framing, texture, and recurring motifs from brand evidence.' });
-
-  const penalties: Record<CraftIssue['code'], number> = {
-    'template-repetition': 24,
-    'unmotivated-motion': 18,
-    'transition-spam': 12,
-    'pacing-monotony': 12,
-    'typography-template': 10,
-    'weak-sound-design': 16,
-    'generic-brand-language': 20,
-  };
-  const score = Math.max(0, Math.min(100, 100 - issues.reduce((sum, issue) => sum + penalties[issue.code], 0)));
-  return { score, issues, metrics: { durationVariation, nonCutTransitionRatio, repeatedPatternRatio, soundEventsPerShot, brandSpecificChoices: input.brandSpecificChoices } };
-}
-
-export function assertHumanCraftRelease(report: HumanCraftReport, minimumScore = 80): void {
-  if (report.score < minimumScore) throw new Error(`Human-craft release gate failed: ${report.score} < ${minimumScore}`);
-  const errors = report.issues.filter((issue) => issue.severity === 'error');
-  if (errors.length) throw new Error(`Human-craft release gate has ${errors.length} blocking issue(s): ${errors.map((issue) => issue.code).join(', ')}`);
-}
+export function buildCraftDirection(input:CraftDirectionInput):CraftDirection {for(const key of ['brand','audience','objective'] as const)if(!input[key]?.trim())throw new Error(`${key} is required`);return{...input,references:[...(input.references??[])],forbidGenericAiAesthetic:true,rules:[
+'Every camera move must be motivated by subject, story, reveal, or emotional emphasis; motion is not decoration.',
+'Build a brand-specific visual grammar from references, product geometry, audience, and message instead of a universal AI-ad look.',
+'Prefer editorial cuts, match cuts, motivated wipes, and physical transitions; avoid transition spam and repeated zoom/push presets.',
+'Vary shot duration by narrative function and performance rather than mechanically equal beats.',
+'Typography must follow an authored hierarchy and grid; keep critical copy native and avoid generic centered bold captions.',
+'Sound design must carry room tone, tactile foley, transitions, dynamics, and purposeful silence instead of music-only coverage.',
+'Preserve believable imperfections when they communicate material, camera, performance, or environment; never add random jitter as fake humanity.',
+'Use generation to solve a specific coverage problem, not to replace available authentic footage by default.',
+'Require continuity of lighting, lens logic, screen direction, product geometry, and action across adjacent shots.',
+'Build narrative progression across setup, development, turn or proof, and resolution rather than a montage of interchangeable hero shots.',
+'Cut and animate to meaningful audiovisual events, but avoid metronomic beat matching; sync should support meaning rather than advertise the template.',
+'Finish with a human-craft review that can reject technically valid edits for weak taste, repetition, generic styling, or incoherent story.'
+]}}
+const ratio=(n:number,d:number)=>d<=0?0:n/d;
+function medianNearestDistance(a:number[],b:number[]):number|undefined{if(!a.length||!b.length)return undefined;const distances=a.map(x=>Math.min(...b.map(y=>Math.abs(x-y)))).sort((x,y)=>x-y);const m=Math.floor(distances.length/2);return distances.length%2?distances[m]:(distances[m-1]+distances[m])/2}
+export function evaluateHumanCraft(input:HumanCraftInput):HumanCraftReport {const issues:CraftIssue[]=[];const shots=input.shots;if(!shots.length)return{score:0,issues:[{code:'generic-brand-language',severity:'error',message:'No authored shots exist.',repair:'Create a shot plan with explicit narrative purposes.'}],metrics:{durationVariation:0,nonCutTransitionRatio:0,repeatedPatternRatio:0,soundEventsPerShot:0,brandSpecificChoices:input.brandSpecificChoices,narrativeStageCount:0,continuityBreaks:input.continuityBreaks??0,authenticEvidenceRatio:input.authenticEvidenceRatio}};
+const durations=shots.map(s=>s.durationFrames),mean=durations.reduce((a,b)=>a+b,0)/durations.length,variance=durations.reduce((sum,v)=>sum+Math.pow(v-mean,2),0)/durations.length,durationVariation=mean>0?Math.sqrt(variance)/mean:0,nonCutTransitionRatio=ratio(shots.filter(s=>s.transition!=='cut').length,shots.length);const patterns=new Map<string,number>();for(const shot of shots){const key=`${shot.transition}|${shot.cameraMove}|${shot.purpose}`;patterns.set(key,(patterns.get(key)??0)+1)}const repeatedPatternRatio=ratio(Math.max(...patterns.values()),shots.length),moving=shots.filter(s=>s.cameraMove!=='static'),movingKinds=new Set(moving.map(s=>s.cameraMove)),purposeKinds=new Set(shots.map(s=>s.purpose)),soundEventsPerShot=ratio(input.soundEvents.length,shots.length),stages=new Set(shots.flatMap(s=>s.narrativeStage?[s.narrativeStage]:[])),avSync=medianNearestDistance(input.visualEventFrames??[],input.audioCueFrames??[]),continuityBreaks=input.continuityBreaks??0;
+if(shots.length>=3&&repeatedPatternRatio>=.66)issues.push({code:'template-repetition',severity:'error',message:'The same transition, camera move, and shot purpose repeats like a template.',repair:'Re-author shot functions first, then choose motion and transitions that serve each function.'});if(moving.length>=3&&movingKinds.size===1&&purposeKinds.size<=1)issues.push({code:'unmotivated-motion',severity:'error',message:'Camera motion repeats without changing narrative purpose.',repair:'Remove decorative movement and motivate each move from subject or story.'});if(nonCutTransitionRatio>.5)issues.push({code:'transition-spam',severity:'warning',message:'More than half of edits use visible transitions.',repair:'Default to cuts and reserve visible transitions for semantic or physical motivation.'});if(shots.length>=3&&durationVariation<.12)issues.push({code:'pacing-monotony',severity:'warning',message:'Shot lengths are mechanically uniform.',repair:'Shape duration around information density, performance, anticipation, and release.'});if(input.typographyStyles.length>=3&&new Set(input.typographyStyles).size<=1)issues.push({code:'typography-template',severity:'warning',message:'Typography repeats one generic treatment.',repair:'Create an intentional hierarchy with brand-specific alignment, scale, rhythm, and restraint.'});if(soundEventsPerShot<.5)issues.push({code:'weak-sound-design',severity:'error',message:'The cut lacks enough authored sonic events to support picture rhythm and materiality.',repair:'Add selective foley, ambience, accents, dynamics, and silence tied to picture events.'});if(input.brandSpecificChoices<2)issues.push({code:'generic-brand-language',severity:'error',message:'Too few decisions are specific to this brand, product, or audience.',repair:'Derive palette, type, motion, framing, texture, and recurring motifs from brand evidence.'});if(shots.some(s=>s.narrativeStage)&&stages.size<3)issues.push({code:'narrative-flatness',severity:'error',message:'The sequence has too little narrative progression.',repair:'Assign setup, development, proof or turn, and resolution functions, then rebuild shot order around that arc.'});if(avSync!==undefined&&avSync>6)issues.push({code:'audiovisual-desync',severity:'warning',message:'Important visual events and authored sound cues are weakly coordinated.',repair:'Move or redesign selective cues so tactile and narrative events have intentional sonic relationships without beat-matching every cut.'});if(continuityBreaks>0)issues.push({code:'continuity-risk',severity:continuityBreaks>2?'error':'warning',message:'Continuity review found inconsistent lens, lighting, screen direction, action, or product geometry.',repair:'Repair the smallest affected shot range and preserve neighboring edit rhythm.'});if(input.authenticEvidenceRatio!==undefined&&input.authenticEvidenceRatio<.35)issues.push({code:'synthetic-evidence-overuse',severity:'warning',message:'Most visual evidence is synthetic even though the piece should feel grounded.',repair:'Prefer authentic product, UI, environment, performance, or documentary evidence and generate only explicit coverage gaps.'});
+const penalties:Record<CraftIssueCode,number>={'template-repetition':24,'unmotivated-motion':18,'transition-spam':12,'pacing-monotony':12,'typography-template':10,'weak-sound-design':16,'generic-brand-language':20,'narrative-flatness':18,'audiovisual-desync':8,'continuity-risk':14,'synthetic-evidence-overuse':10};const score=Math.max(0,Math.min(100,100-issues.reduce((sum,i)=>sum+penalties[i.code],0)));return{score,issues,metrics:{durationVariation,nonCutTransitionRatio,repeatedPatternRatio,soundEventsPerShot,brandSpecificChoices:input.brandSpecificChoices,narrativeStageCount:stages.size,audiovisualSyncFrames:avSync,continuityBreaks,authenticEvidenceRatio:input.authenticEvidenceRatio}}}
+export function buildCraftRepairPlan(report:HumanCraftReport):CraftRepair[]{const scope:Record<CraftIssueCode,CraftRepair['scope']>={'template-repetition':'sequence','unmotivated-motion':'shot','transition-spam':'sequence','pacing-monotony':'sequence','typography-template':'typography','weak-sound-design':'audio','generic-brand-language':'brand','narrative-flatness':'sequence','audiovisual-desync':'audio','continuity-risk':'shot','synthetic-evidence-overuse':'evidence'};return report.issues.map((issue,index)=>({issue:issue.code,priority:(issue.severity==='error'?100:50)-index,action:issue.repair,scope:scope[issue.code]})).sort((a,b)=>b.priority-a.priority)}
+export function assertHumanCraftRelease(report:HumanCraftReport,minimumScore=80):void{if(report.score<minimumScore)throw new Error(`Human-craft release gate failed: ${report.score} < ${minimumScore}`);const errors=report.issues.filter(i=>i.severity==='error');if(errors.length)throw new Error(`Human-craft release gate has ${errors.length} blocking issue(s): ${errors.map(i=>i.code).join(', ')}`)}
