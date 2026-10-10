@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {validateColorPipeline,validateMediaColorTags} from '../src/index.ts';
+test('validates HDR and media tags',()=>{const p=validateColorPipeline({configId:'aces',workingSpace:'ACEScg',display:'sRGB',view:'ACES 1.0 SDR',hdr:{transfer:'pq',masteringNits:1000}});assert.equal(p.hdr?.masteringNits,1000);assert.equal(validateMediaColorTags([{assetId:'a',inputSpace:'sRGB',override:false}],new Set(['a'])).length,1)});
+test('rejects invalid HDR and duplicate tags',()=>{assert.throws(()=>validateColorPipeline({configId:'x',workingSpace:'x',display:'x',view:'x',hdr:{transfer:'pq',masteringNits:NaN}}));assert.throws(()=>validateMediaColorTags([{assetId:'a',inputSpace:'x',override:false},{assetId:'a',inputSpace:'x',override:false}],new Set(['a'])))});
