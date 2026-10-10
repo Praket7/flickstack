@@ -11,6 +11,17 @@ jobs:
         with:
           toolchain: 1.88.0
           components: rustfmt
+      - name: Normalize legacy leading-dot Rust floats
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          for path in Path('crates').rglob('*.rs'):
+              text = path.read_text()
+              fixed = re.sub(r'(?<![\w.])\.(\d)', r'0.\1', text)
+              if fixed != text:
+                  path.write_text(fixed)
+          PY
       - name: Produce rustfmt patch
         run: |
           cargo fmt --all
