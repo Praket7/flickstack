@@ -1,0 +1,9 @@
+export type LocalBackendId='deterministic'|'ltx-2b'|'ltx-13b'|'wan22-ti2v5b';
+export interface NvidiaGpuInfo{name:string;vramGb:number}
+export interface LocalHardwareSnapshot{platform:NodeJS.Platform;arch:string;cpu:string;totalRamGb:number;freeDiskGb?:number;nvidia:NvidiaGpuInfo[];appleSilicon:boolean;python?:string;git:boolean;ffmpeg:boolean;ffprobe:boolean}
+export interface ModelDownload{repoId:string;filename?:string;localName?:string;fullSnapshot?:boolean;estimatedGb:number}
+export interface LocalModelRecipe{id:LocalBackendId;label:string;quality:'deterministic'|'preview'|'high'|'highest';repoUrl?:string;repoFolder?:string;pythonRequirement?:string;modelDownloads:ModelDownload[];minVramGb?:number;minRamGb?:number;supportsCuda:boolean;supportsMps:boolean;fps:number;defaultWidth:number;defaultHeight:number;maxDurationSeconds:number;notes:string[]}
+export interface LocalRuntimeSelection{backend:LocalBackendId;reason:string;recipe:LocalModelRecipe;generative:boolean}
+export interface LocalRuntimeConfig{version:1;root:string;backend:LocalBackendId;repoDir?:string;venvDir?:string;python?:string;modelDir?:string;workerScript:string;host:string;port:number;createdAt:string;hardware:LocalHardwareSnapshot}
+export interface SetupCommand{label:string;command:string;args:string[];cwd?:string;optional?:boolean}
+export interface LocalSetupPlan{selection:LocalRuntimeSelection;root:string;configPath:string;commands:SetupCommand[];estimatedDownloadGb:number;diagnostics:string[]}
