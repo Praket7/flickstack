@@ -4,7 +4,7 @@
   "version": "0.4.0",
   "identifier": "ai.flicksmith.desktop",
   "build": {
-    "beforeBuildCommand": "node --experimental-strip-types ../build.ts",
+    "beforeBuildCommand": "node --experimental-strip-types build.ts",
     "frontendDist": "../web-dist"
   },
   "app": {
