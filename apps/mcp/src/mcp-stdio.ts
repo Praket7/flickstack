@@ -41,7 +41,7 @@ function creativeValidationContext(input: any) {
     compositionIds: new Set<string>(Array.isArray(input?.compositionIds) ? input.compositionIds.map(String) : []),
     beatIds: new Set<string>(Array.isArray(input?.beatIds) ? input.beatIds.map(String) : []),
     motionStyleIds: new Set<string>(Array.isArray(input?.motionStyleIds) ? input.motionStyleIds.map(String) : []),
-    providers: providerRegistry,
+    providers: providerRegistry.list(),
   };
 }
 
