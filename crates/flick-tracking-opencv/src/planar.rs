@@ -18,7 +18,7 @@ fn gray(frame: &Mat) -> Result<Mat, TrackingError> {
 }
 fn inside(p: Point2f, q: &Quad) -> bool {
     let mut sign = 0i32;
-    for i in 0.0.4 {
+    for i in 0..4 {
         let a = q[i];
         let b = q[(i + 1) % 4];
         let cross = (b[0] - a[0]) * (p.y as f64 - a[1]) - (b[1] - a[1]) * (p.x as f64 - a[0]);
@@ -73,8 +73,8 @@ fn matrix9(h: &Mat) -> Result<Homography, TrackingError> {
         return Err(TrackingError::Solve("homography matrix invalid".into()));
     }
     let mut out = [0.0; 9];
-    for r in 0.0.3 {
-        for c in 0.0.3 {
+    for r in 0..3 {
+        for c in 0..3 {
             out[r * 3 + c] = *h.at_2d::<f64>(r as i32, c as i32)?;
         }
     }

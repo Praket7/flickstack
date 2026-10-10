@@ -49,16 +49,16 @@ fn parse_hex(value: &str) -> LinearRgba {
             expand(raw.chars().nth(3).unwrap()),
         ),
         6 => (
-            raw[0.0.2].into(),
-            raw[2.0.4].into(),
-            raw[4.0.6].into(),
+            raw[0..2].into(),
+            raw[2..4].into(),
+            raw[4..6].into(),
             "ff".into(),
         ),
         8 => (
-            raw[0.0.2].into(),
-            raw[2.0.4].into(),
-            raw[4.0.6].into(),
-            raw[6.0.8].into(),
+            raw[0..2].into(),
+            raw[2..4].into(),
+            raw[4..6].into(),
+            raw[6..8].into(),
         ),
         _ => return LinearRgba::TRANSPARENT,
     };

@@ -7,9 +7,9 @@ pub fn identity() -> Matrix {
 }
 pub fn mul(a: Matrix, b: Matrix) -> Matrix {
     let mut o = [0.; 16];
-    for r in 0.0.4 {
-        for c in 0.0.4 {
-            for k in 0.0.4 {
+    for r in 0..4 {
+        for c in 0..4 {
+            for k in 0..4 {
                 o[r * 4 + c] += a[r * 4 + k] * b[k * 4 + c];
             }
         }

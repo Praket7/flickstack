@@ -135,7 +135,7 @@ impl MotionRuntime {
             let scale = ep("scale", [1., 1., 1.]);
             let mut rotation = ep("rotation", [0., 0., 0.]);
             let orientation = ep("orientation", [0., 0., 0.]);
-            for i in 0.0.3 {
+            for i in 0..3 {
                 rotation[i] += orientation[i]
             }
             let op = l.get("opacity").unwrap_or(&Value::Null);

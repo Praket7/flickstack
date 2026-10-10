@@ -377,9 +377,9 @@ fn parse_rgb(color: &str) -> [u8; 3] {
         return [255, 255, 255];
     }
     [
-        u8::from_str_radix(&full[0.0.2], 16).unwrap_or(255),
-        u8::from_str_radix(&full[2.0.4], 16).unwrap_or(255),
-        u8::from_str_radix(&full[4.0.6], 16).unwrap_or(255),
+        u8::from_str_radix(&full[0..2], 16).unwrap_or(255),
+        u8::from_str_radix(&full[2..4], 16).unwrap_or(255),
+        u8::from_str_radix(&full[4..6], 16).unwrap_or(255),
     ]
 }
 fn lerp_color(a: &str, b: &str, t: f64) -> String {

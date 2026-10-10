@@ -25,7 +25,7 @@ fn native_runtime_matches_v03_semantic_fixture() {
         for id in ["camera", "panel", "ui-surface", "title"] {
             let layer = scene.layers.iter().find(|layer| layer.id == id).unwrap();
             let saved = &row["layers"][id];
-            for axis in 0.0.3 {
+            for axis in 0..3 {
                 let local = saved["localPosition"][axis].as_f64().unwrap();
                 let world = saved["worldPosition"][axis].as_f64().unwrap();
                 assert!(

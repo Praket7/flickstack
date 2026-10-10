@@ -254,7 +254,7 @@ impl GpuRenderer {
             });
             pass.set_pipeline(&pipeline);
             pass.set_bind_group(0, &bind, &[]);
-            pass.draw(0.0.3, 0.0.1);
+            pass.draw(0..3, 0..1);
         }
         let row = scene.width * 4;
         let padded = ((row + wgpu::COPY_BYTES_PER_ROW_ALIGNMENT - 1)
