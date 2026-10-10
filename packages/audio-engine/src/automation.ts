@@ -32,16 +32,14 @@ export function sampleAutomation(lane: AutomationLane, frame: number): number {
 
 export function analyzeLoudnessPlan(input: { measuredLufs: number; targetLufs: number; truePeakDbtp: number }) {
   for (const [key, value] of Object.entries(input)) if (!Number.isFinite(value)) throw new Error(`${key} must be finite`);
-  const rawGain = input.targetLufs - input.measuredLufs;
+  const gainDb = input.targetLufs - input.measuredLufs;
   const limiterCeilingDbtp = -1;
-  const maxSafeGain = limiterCeilingDbtp - input.truePeakDbtp;
   return {
     measuredLufs: input.measuredLufs,
     targetLufs: input.targetLufs,
-    gainDb: Math.min(rawGain, maxSafeGain < rawGain ? maxSafeGain : rawGain),
-    requestedGainDb: rawGain,
+    gainDb,
     limiterCeilingDbtp,
-    requiresLimiter: input.truePeakDbtp + rawGain > limiterCeilingDbtp,
+    requiresLimiter: input.truePeakDbtp + gainDb > limiterCeilingDbtp,
   };
 }
 
