@@ -68,6 +68,54 @@ pub enum RuntimeError {
     #[error("runtime budget exceeded")]
     Budget,
 }
+
+fn validate_parent_graph(layers: &[Value], max_depth: usize) -> Result<(), RuntimeError> {
+    let mut parents = HashMap::<String, Option<String>>::new();
+    for layer in layers {
+        let id = layer
+            .get("id")
+            .and_then(Value::as_str)
+            .ok_or_else(|| RuntimeError::Layer("missing id".into()))?
+            .to_string();
+        let parent = layer
+            .get("parentId")
+            .and_then(Value::as_str)
+            .map(str::to_string);
+        parents.insert(id, parent);
+    }
+    for id in parents.keys() {
+        let mut seen = HashSet::<String>::new();
+        let mut current = Some(id.as_str());
+        let mut depth = 0usize;
+        while let Some(node) = current {
+            if !seen.insert(node.to_string()) {
+                return Err(RuntimeError::Cycle(node.to_string()));
+            }
+            depth += 1;
+            if depth > max_depth {
+                return Err(RuntimeError::Budget);
+            }
+            current = parents.get(node).and_then(|parent| parent.as_deref());
+        }
+    }
+    Ok(())
+}
+
+fn aspect_ratio(value: &Value) -> Option<f64> {
+    let aspect = value.get("aspect")?.as_str()?;
+    let (width, height) = aspect.split_once(':')?;
+    let width = width.parse::<f64>().ok()?;
+    let height = height.parse::<f64>().ok()?;
+    (height.abs() > f64::EPSILON).then_some(width / height)
+}
+
+fn safe_area(value: &Value) -> [f64; 4] {
+    let Some(values) = value.get("safeArea").and_then(Value::as_array) else {
+        return [0.0; 4];
+    };
+    [0usize, 1, 2, 3].map(|index| values.get(index).and_then(Value::as_f64).unwrap_or(0.0))
+}
+
 pub struct MotionRuntime {
     program: Arc<RenderProgramV1>,
     max_depth: usize,
@@ -75,12 +123,14 @@ pub struct MotionRuntime {
 }
 impl MotionRuntime {
     pub fn load(program: Arc<RenderProgramV1>) -> Result<Self, RuntimeError> {
+        const MAX_DEPTH: usize = 128;
         if program.layers.len() > 4096 {
             return Err(RuntimeError::Budget);
         }
+        validate_parent_graph(&program.layers, MAX_DEPTH)?;
         Ok(Self {
             program,
-            max_depth: 128,
+            max_depth: MAX_DEPTH,
             max_layers: 4096,
         })
     }
@@ -95,6 +145,27 @@ impl MotionRuntime {
         if self.program.layers.len() > self.max_layers {
             return Err(RuntimeError::Budget);
         }
+        let target_aspect = if surface.height.abs() > f64::EPSILON {
+            surface.width / surface.height
+        } else {
+            1.0
+        };
+        let layout_variant = self
+            .program
+            .extra
+            .get("layoutVariants")
+            .and_then(Value::as_array)
+            .and_then(|variants| {
+                variants.iter().min_by(|a, b| {
+                    let da = aspect_ratio(a)
+                        .map(|ratio| (ratio - target_aspect).abs())
+                        .unwrap_or(f64::INFINITY);
+                    let db = aspect_ratio(b)
+                        .map(|ratio| (ratio - target_aspect).abs())
+                        .unwrap_or(f64::INFINITY);
+                    da.total_cmp(&db)
+                })
+            });
         let mut local = HashMap::<String, LocalLayerState>::new();
         for (index, l) in self.program.layers.iter().enumerate() {
             let id = l
@@ -130,7 +201,19 @@ impl MotionRuntime {
                 v = apply_vec3(v, p.get("behaviors").and_then(Value::as_array), ctx);
                 v
             };
-            let position = ep("position", [0., 0., 0.]);
+            let mut position = ep("position", [0., 0., 0.]);
+            if let Some(variant) = layout_variant {
+                let constraint = variant
+                    .get("constraintsByLayer")
+                    .and_then(|constraints| constraints.get(&id));
+                position = layout::resolve(
+                    position,
+                    surface.width,
+                    surface.height,
+                    safe_area(variant),
+                    constraint,
+                );
+            }
             let anchor = ep("anchor", [0., 0., 0.]);
             let scale = ep("scale", [1., 1., 1.]);
             let mut rotation = ep("rotation", [0., 0., 0.]);
