@@ -163,7 +163,7 @@ pub fn solve_planar_track_impl(
             "planar region has fewer than four ORB features".into(),
         ));
     }
-    let mut matcher = features2d::BFMatcher::create(core::NORM_HAMMING, false)?;
+    let matcher = features2d::BFMatcher::create(core::NORM_HAMMING, false)?;
     let identity: [f64; 9] = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
     let mut frames = vec![PlanarTrackFrame {
         frame: range.start,
