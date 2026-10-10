@@ -20,11 +20,13 @@ test('stdio MCP initializes and advertises FlickSmith tools without Codex', asyn
   child.stdin.write(JSON.stringify({ jsonrpc:'2.0', id:1, method:'initialize', params:{ protocolVersion:'2025-06-18', capabilities:{}, clientInfo:{name:'test',version:'1'} } })+'\n');
   child.stdin.write(JSON.stringify({ jsonrpc:'2.0', method:'notifications/initialized', params:{} })+'\n');
   child.stdin.write(JSON.stringify({ jsonrpc:'2.0', id:2, method:'tools/list', params:{} })+'\n');
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  const deadline = Date.now() + 3000;
+  while (Date.now() < deadline && (!responses.some((r) => r.id === 1) || !responses.some((r) => r.id === 2))) await new Promise((resolve) => setTimeout(resolve, 25));
   child.kill();
   const init = responses.find((r) => r.id === 1);
   const list = responses.find((r) => r.id === 2);
   assert.equal(init?.result?.serverInfo?.name, 'flicksmith');
   assert.ok(list?.result?.tools?.some((tool:any) => tool.name === 'get_timeline'));
   assert.ok(list?.result?.tools?.some((tool:any) => tool.name === 'generate_asset'));
+  assert.ok(list?.result?.tools?.some((tool:any) => tool.name === 'review_human_craft'));
 });
