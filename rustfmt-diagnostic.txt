@@ -1,136 +1,26 @@
 error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:173
+ --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/behaviors.rs:6:542
   |
-9 | ...old"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,...
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[0.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                             +
-
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:177
-  |
-9 | ...=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clam...
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,0.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                 +
-
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:214
-  |
-9 | ...tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),in...
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[0.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                      +
-
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:218
-  |
-9 | ...ent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1]...
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,0.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                          +
-
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:360
-  |
-9 | ...-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=...
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,0.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                                                                                                                                                                        +
-
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:368
-  |
-9 | ...=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.po...
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,0.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                                                                                                                                                                                +
-
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:403
-  |
-9 | ...r"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f...
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,0.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                                                                                                                                                                                                                   +
-
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:407
-  |
-9 | ...>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64....
+6 | ...e+noise(n(b.get("seed"),c.seed),c.frame*n(params.get("frequency"),.1))*n(params.get("amplitude"),n(params.get("amount"),1.0)),"audio-r...
   |                                                                      ^^
   |
 help: must have an integer part
   |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,0.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                                                                                                                                                                                                                       +
+6 | pub fn apply_number(mut base:f64,behaviors:Option<&Vec<Value>>,c:BehaviorContext)->f64{for b in behaviors.into_iter().flatten(){if b.get("enabled").and_then(Value::as_bool)==Some(false){continue}let kind=b.get("type").and_then(Value::as_str).unwrap_or("");let params=b.get("params").unwrap_or(&Value::Null);let q=p(c);base=match kind{"fade"=>{let from=n(params.get("from"),0.0);from+(n(params.get("to"),base)-from)*q},"drift"=>base+n(params.get("amount"),1.0)*q,"wiggle"=>base+noise(n(b.get("seed"),c.seed),c.frame*n(params.get("frequency"),0.1))*n(params.get("amplitude"),n(params.get("amount"),1.0)),"audio-react"=>{let sig=params.get("signal").and_then(Value::as_str).unwrap_or("energy");let a=match sig{"low"=>c.low,"mid"=>c.mid,"high"=>c.high,_=>c.energy};base+a*n(params.get("amount"),1.0)},_=>base};}base}
+  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              +
 
 error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:410
+ --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/behaviors.rs:7:665
   |
-9 | ...ier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf...
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,0.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                                                                                                                                                                                                                          +
-
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:509
-  |
-9 | ...0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0...
+7 | ...et("amplitude"),[10.0,10.0,10.0]);let f=n(params.get("frequency"),.1);let seed=n(b.get("seed"),c.seed);[base[0]+noise(seed,c.frame*f)*...
   |                                                                      ^^
   |
 help: must have an integer part
   |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<0.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             +
+7 | pub fn apply_vec3(mut base:Vec3,behaviors:Option<&Vec<Value>>,c:BehaviorContext)->Vec3{for b in behaviors.into_iter().flatten(){if b.get("enabled").and_then(Value::as_bool)==Some(false){continue}let kind=b.get("type").and_then(Value::as_str).unwrap_or("");let params=b.get("params").unwrap_or(&Value::Null);let q=p(c);base=match kind{"slide"=>{let from=v3(params.get("from"),[0.0,0.0,0.0]);[base[0]+from[0]*(1.0-q),base[1]+from[1]*(1.0-q),base[2]+from[2]*(1.0-q)]},"drift"=>{let d=v3(params.get("offset"),[0.0,0.0,0.0]);[base[0]+d[0]*q,base[1]+d[1]*q,base[2]+d[2]*q]},"wiggle"=>{let amp=v3(params.get("amplitude"),[10.0,10.0,10.0]);let f=n(params.get("frequency"),0.1);let seed=n(b.get("seed"),c.seed);[base[0]+noise(seed,c.frame*f)*amp[0],base[1]+noise(seed+1.0,c.frame*f)*amp[1],base[2]+noise(seed+2.0,c.frame*f)*amp[2]]},"audio-react"=>{let sig=params.get("signal").and_then(Value::as_str).unwrap_or("energy");let a=match sig{"low"=>c.low,"mid"=>c.mid,"high"=>c.high,_=>c.energy};let amount=v3(params.get("amount"),[1.0,1.0,1.0]);[base[0]+a*amount[0],base[1]+a*amount[1],base[2]+a*amount[2]]},_=>base};}base}
+  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         +
 
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:746
-  |
-9 | ...},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f...
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+0.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          +
-
-error: float literals must have an integer part
- --> /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs:9:807
-  |
-9 | ...s()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                     ^^^
-  |
-help: must have an integer part
-  |
-9 | fn easing(kind:&str,t:f64,a:&Value,b:&Value)->f64{let t=clamp01(t);if t==0.0||t==1.0{return t}match kind{"hold"=>0.0,"linear"=>t,"bezier"=>{let out=tangent(a,"outTangent",[.33,.33]);let inc=tangent(b,"inTangent",[.67,.67]);bezier_progress(t,clamp01(out[0]),out[1],clamp01(inc[0]),inc[1])},"auto-bezier"=>t*t*(3.0-2.0*t),"continuous-bezier"=>bezier_progress(t,.42,0.0,.58,1.0),"ease"=>bezier_progress(t,.25,.1,.25,1.0),"expo-in"=>2f64.powf(10.0*(t-1.0)),"expo-out"=>1.0-2f64.powf(-10.0*t),"expo-in-out"=>if t<.5{2f64.powf(20.0*t-10.0)/2.0}else{(2.0-2f64.powf(-20.0*t+10.0))/2.0},"spring"=>{let raw=1.0-(-6.0*t).exp()*(12.0*t).cos();let end=1.0-(-6.0f64).exp()*12.0f64.cos();raw/end},"damped-overshoot"=>{let raw=1.0-(-5.0*t).exp()*((9.0*t).cos()+.35*(9.0*t).sin());let end=1.0-(-5.0f64).exp()*(9.0f64.cos()+0.35*9.0f64.sin());raw/end},_=>t}}
-  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       +
-
-Error writing files: failed to resolve mod `animation`: cannot parse /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/animation.rs
+Error writing files: failed to resolve mod `behaviors`: cannot parse /home/runner/work/flickstack/flickstack/crates/flick-motion-runtime/src/behaviors.rs
 error: float literals must have an integer part
    --> /home/runner/work/flickstack/flickstack/crates/flick-render-cli/src/scene_bridge.rs:137:192
     |
