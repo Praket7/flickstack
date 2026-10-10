@@ -25,8 +25,8 @@ export function professionalInterchangeCapabilities():InterchangeCapability[]{re
  {id:'otio',import:'supported',export:'supported',processing:'structured'},
  {id:'svg',import:'supported',export:'metadata-only',processing:'structured'},
  {id:'lottie',import:'supported',export:'metadata-only',processing:'structured'},
- {id:'ocio',import:'supported',export:'supported',processing:'native',diagnostic:'Built-in deterministic transforms are available; external OCIO config execution requires the native runtime.'},
- {id:'openfx',import:'metadata-only',export:'metadata-only',processing:'structured',diagnostic:'OpenFX execution is allowed only through the isolated host contract.'},
+ {id:'ocio',import:'supported',export:'supported',processing:'metadata-only',diagnostic:'Legacy v0.3 capability record is metadata-only; v0.5 native/built-in color processing lives in @flicksmith/color.'},
+ {id:'openfx',import:'metadata-only',export:'metadata-only',processing:'metadata-only',diagnostic:'Legacy in-process OpenFX execution remains disabled; v0.5 uses the isolated flick-openfx-host boundary.'},
  {id:'aaf',import:'unsupported',export:'unsupported',diagnostic:'AAF remains outside the v0.5 release gate.'},
  {id:'fcpxml',import:'unsupported',export:'supported',processing:'structured'},
  {id:'edl',import:'unsupported',export:'supported',processing:'structured'},
@@ -39,6 +39,6 @@ export const parseSvgVectorSource=importStructuredSvg;
 export const parseLottieSource=importStructuredLottie;
 export const createColorManagementIntent=(input:{workingSpace:string;displaySpace:string;outputSpace:string;view?:string;look?:string})=>({workingSpace:input.workingSpace,displaySpace:input.displaySpace,outputSpace:input.outputSpace,view:input.view,look:input.look,runtime:'declarative-only' as const});
 export function ofxHostCapabilities(){return{api:'OpenFX' as const,nativeExecution:false as const,processIsolation:true as const,parameterSerialization:true as const,gpuContextSharing:false as const,pixelFormats:['RGBA8','RGBA16F','RGBA32F'],status:'isolated-contract' as const};}
-export function assertNativeOfxExecutionAllowed():never{throw new Error('Native OpenFX execution must be delegated to the isolated OpenFX host process');}
+export function assertNativeOfxExecutionAllowed():never{throw new Error('Native OpenFX execution is disabled in-process and must be delegated to the isolated OpenFX host process');}
 
 export * from './pro.ts';
