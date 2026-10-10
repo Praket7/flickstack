@@ -21,6 +21,7 @@ fn layout() -> TextLayout {
             font_identity: "f".into(),
             font_index: 0,
             font_size: 20.0,
+            font_bytes: vec![],
             rtl: false,
             normalized_variation_coords: vec![],
             clusters: vec![
