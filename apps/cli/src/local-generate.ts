@@ -1,0 +1,5 @@
+import{readLocalRuntimeConfig,generateLocalVideoFromFile}from'../../../packages/local-runtime/src/index.ts';
+const args=process.argv.slice(2);const value=(flag:string,fallback?:string)=>{const i=args.indexOf(flag);return i>=0?args[i+1]:fallback};
+const input=args[0],prompt=value('--prompt'),out=value('--out','local-generation.mp4');
+if(!input||!prompt){console.error('Usage: flicksmith local generate <image> --prompt TEXT [--out FILE] [--duration 4] [--candidates 2] [--seed 42] [--resolution 720p]');process.exit(1)}
+try{const cfg=readLocalRuntimeConfig(value('--config'));const result=await generateLocalVideoFromFile(cfg,input,out!,{prompt,durationSeconds:Number(value('--duration','4')),candidateCount:Number(value('--candidates','2')),seed:Number(value('--seed','42')),resolution:value('--resolution','720p'),aspectRatio:value('--aspect','16:9'),strictProductQC:!args.includes('--relaxed-qc')});console.log(JSON.stringify(result,null,2))}catch(e){console.error(`error: ${e instanceof Error?e.message:String(e)}`);process.exit(1)}
