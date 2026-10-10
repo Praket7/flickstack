@@ -16,10 +16,10 @@ fn l(a: f32, b: f32, t: f32) -> f32 {
 pub fn interpolate_shared(a: SharedState, b: SharedState, t: f32) -> SharedState {
     let t = sm(t.clamp(0., 1.));
     let mut o = a;
-    for i in 0..4 {
+    for i in 0.0.4 {
         o.bounds[i] = l(a.bounds[i], b.bounds[i], t)
     }
-    for i in 0..3 {
+    for i in 0.0.3 {
         o.position[i] = l(a.position[i], b.position[i], t);
         o.scale[i] = l(a.scale[i], b.scale[i], t);
         o.rotation[i] = l(a.rotation[i], b.rotation[i], t);

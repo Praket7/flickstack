@@ -1,33 +1,450 @@
 use crate::animation::Vec3;
 use crate::RuntimeError;
-use serde::{Deserialize,Serialize};
+use serde::{Deserialize, Serialize};
 
-pub const MAX_PROCEDURAL_INSTANCES:usize=10_000;
-pub const MAX_PARTICLES:usize=50_000;
-#[derive(Debug,Clone,Copy,Serialize,Deserialize,PartialEq)]#[serde(rename_all="camelCase")]pub struct IndexContext{pub index:usize,pub count:usize,pub depth:usize,pub normalized:f64,pub seed:u32}
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq)]#[serde(tag="kind",rename_all="kebab-case",rename_all_fields="camelCase")]pub enum ReplicatorDistribution{Grid{columns:usize,rows:Option<usize>,spacing:[f64;2]},Radial{radius:f64,start_angle:f64,end_angle:f64},Path{points:Vec<[f64;2]>,closed:Option<bool>}}
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq)]#[serde(rename_all="camelCase")]pub struct ReplicatorDefinition{pub id:String,pub count:usize,pub distribution:ReplicatorDistribution,pub position_offset:Option<Vec3>,pub rotation_offset:Option<Vec3>,pub scale_offset:Option<Vec3>,pub time_offset_frames:Option<f64>,pub seed:i64}
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq)]#[serde(rename_all="camelCase")]pub struct ProceduralInstance{pub id:String,pub position:Vec3,pub rotation:Vec3,pub scale:Vec3,pub time_offset_frames:f64,pub context:IndexContext}
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq)]#[serde(rename_all="kebab-case")]pub enum FalloffKind{Circle,Rect,Linear,Sweep,Path}
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq)]#[serde(rename_all="kebab-case")]pub enum FalloffGraph{Linear,Smoothstep,EaseIn,EaseOut}
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq)]#[serde(rename_all="kebab-case")]pub enum FalloffCombine{Multiply,Add,Max,Min}
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq)]#[serde(rename_all="camelCase")]pub struct FalloffDefinition{pub id:String,pub kind:FalloffKind,pub center:Option<[f64;2]>,pub size:Option<[f64;2]>,pub radius:Option<f64>,pub rotation:Option<f64>,pub path:Option<Vec<[f64;2]>>,pub graph:Option<FalloffGraph>,pub invert:Option<bool>,pub combine:Option<FalloffCombine>,pub strength:Option<f64>}
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq)]#[serde(rename_all="camelCase")]pub struct ParticleDefinition{pub id:String,pub rate:f64,pub lifetime_frames:u32,pub max_particles:Option<usize>,pub seed:i64,pub position:Option<Vec3>,pub velocity:Vec3,pub velocity_variance:Option<Vec3>,pub gravity:Option<Vec3>,pub scale:Option<[f64;2]>,pub rotation:Option<[f64;2]>,pub color:Option<[String;2]>}
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq)]#[serde(rename_all="camelCase")]pub struct ParticleInstance{pub id:String,pub index:usize,pub birth_frame:u32,pub age_frames:u32,pub normalized_age:f64,pub position:Vec3,pub scale:f64,pub rotation:f64,pub color:String,pub context:IndexContext}
+pub const MAX_PROCEDURAL_INSTANCES: usize = 10_000;
+pub const MAX_PARTICLES: usize = 50_000;
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct IndexContext {
+    pub index: usize,
+    pub count: usize,
+    pub depth: usize,
+    pub normalized: f64,
+    pub seed: u32,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(
+    tag = "kind",
+    rename_all = "kebab-case",
+    rename_all_fields = "camelCase"
+)]
+pub enum ReplicatorDistribution {
+    Grid {
+        columns: usize,
+        rows: Option<usize>,
+        spacing: [f64; 2],
+    },
+    Radial {
+        radius: f64,
+        start_angle: f64,
+        end_angle: f64,
+    },
+    Path {
+        points: Vec<[f64; 2]>,
+        closed: Option<bool>,
+    },
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ReplicatorDefinition {
+    pub id: String,
+    pub count: usize,
+    pub distribution: ReplicatorDistribution,
+    pub position_offset: Option<Vec3>,
+    pub rotation_offset: Option<Vec3>,
+    pub scale_offset: Option<Vec3>,
+    pub time_offset_frames: Option<f64>,
+    pub seed: i64,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ProceduralInstance {
+    pub id: String,
+    pub position: Vec3,
+    pub rotation: Vec3,
+    pub scale: Vec3,
+    pub time_offset_frames: f64,
+    pub context: IndexContext,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum FalloffKind {
+    Circle,
+    Rect,
+    Linear,
+    Sweep,
+    Path,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum FalloffGraph {
+    Linear,
+    Smoothstep,
+    EaseIn,
+    EaseOut,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum FalloffCombine {
+    Multiply,
+    Add,
+    Max,
+    Min,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct FalloffDefinition {
+    pub id: String,
+    pub kind: FalloffKind,
+    pub center: Option<[f64; 2]>,
+    pub size: Option<[f64; 2]>,
+    pub radius: Option<f64>,
+    pub rotation: Option<f64>,
+    pub path: Option<Vec<[f64; 2]>>,
+    pub graph: Option<FalloffGraph>,
+    pub invert: Option<bool>,
+    pub combine: Option<FalloffCombine>,
+    pub strength: Option<f64>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ParticleDefinition {
+    pub id: String,
+    pub rate: f64,
+    pub lifetime_frames: u32,
+    pub max_particles: Option<usize>,
+    pub seed: i64,
+    pub position: Option<Vec3>,
+    pub velocity: Vec3,
+    pub velocity_variance: Option<Vec3>,
+    pub gravity: Option<Vec3>,
+    pub scale: Option<[f64; 2]>,
+    pub rotation: Option<[f64; 2]>,
+    pub color: Option<[String; 2]>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ParticleInstance {
+    pub id: String,
+    pub index: usize,
+    pub birth_frame: u32,
+    pub age_frames: u32,
+    pub normalized_age: f64,
+    pub position: Vec3,
+    pub scale: f64,
+    pub rotation: f64,
+    pub color: String,
+    pub context: IndexContext,
+}
 
-fn hash32(value:u32)->u32{let mut x=value;x^=x>>16;x=x.wrapping_mul(0x7feb352d);x^=x>>15;x=x.wrapping_mul(0x846ca68b);x^=x>>16;x}
-pub fn index_context(index:usize,count:usize,depth:usize,seed:i64)->IndexContext{IndexContext{index,count,depth,normalized:if count<=1{0.}else{index as f64/(count-1) as f64},seed:hash32((seed as u32)^((index as u32+1).wrapping_mul(0x9e3779b1)))}}
-pub fn seeded_random(context:IndexContext,salt:u32)->f64{hash32(context.seed^salt.wrapping_add(1).wrapping_mul(0x85ebca6b))as f64/4294967296.}
-fn off(base:Vec3,step:Option<Vec3>,index:usize)->Vec3{if let Some(s)=step{[base[0]+s[0]*index as f64,base[1]+s[1]*index as f64,base[2]+s[2]*index as f64]}else{base}}
-fn sample_path(points:&[[f64;2]],t:f64,closed:bool)->[f64;2]{let mut p=points.to_vec();if closed&&p.len()>1{p.push(p[0]);}let mut lens=Vec::new();let mut total=0.;for pair in p.windows(2){let len=((pair[1][0]-pair[0][0]).powi(2)+(pair[1][1]-pair[0][1]).powi(2)).sqrt();lens.push(len);total+=len;}if total<=f64::EPSILON{return p.first().copied().unwrap_or([0.,0.])}let mut target=t.clamp(0.,1.)*total;for(i,len)in lens.iter().copied().enumerate(){if target<=len||i==lens.len()-1{let q=if len<=f64::EPSILON{0.}else{target/len};return[p[i][0]+(p[i+1][0]-p[i][0])*q,p[i][1]+(p[i+1][1]-p[i][1])*q]}target-=len;}*p.last().unwrap()}
-fn distribution(def:&ReplicatorDefinition,index:usize)->Result<Vec3,RuntimeError>{Ok(match &def.distribution{ReplicatorDistribution::Grid{columns,rows,spacing}=>{let cols=*columns;if cols==0{return Err(RuntimeError::Layer("replicator grid columns must be positive".into()))}let r=(*rows).unwrap_or_else(||def.count.div_ceil(cols));let col=index%cols;let row=index/cols;[(col as f64-(cols as f64-1.)/2.)*spacing[0],(row as f64-(r as f64-1.)/2.)*spacing[1],0.]},ReplicatorDistribution::Radial{radius,start_angle,end_angle}=>{let span=end_angle-start_angle;let full=span.abs()>=359.999;let denom=if full{def.count.max(1)}else{def.count.saturating_sub(1).max(1)};let a=(start_angle+span*index as f64/denom as f64).to_radians();[a.cos()*radius,a.sin()*radius,0.]},ReplicatorDistribution::Path{points,closed}=>{if points.len()<2{return Err(RuntimeError::Layer("replicator path requires two points".into()))}let t=if def.count<=1{0.}else{index as f64/(def.count-1) as f64};let p=sample_path(points,t,closed.unwrap_or(false));[p[0],p[1],0.]}})}
-pub fn evaluate_replicator(def:&ReplicatorDefinition)->Result<Vec<ProceduralInstance>,RuntimeError>{if def.count==0||def.count>MAX_PROCEDURAL_INSTANCES{return Err(RuntimeError::Budget)}let mut out=Vec::with_capacity(def.count);for index in 0..def.count{let context=index_context(index,def.count,0,def.seed);out.push(ProceduralInstance{id:format!("{}:{}",def.id,index),position:off(distribution(def,index)?,def.position_offset,index),rotation:off([0.,0.,0.],def.rotation_offset,index),scale:off([1.,1.,1.],def.scale_offset,index),time_offset_frames:def.time_offset_frames.unwrap_or(0.)*index as f64,context});}Ok(out)}
-fn clamp01(v:f64)->f64{v.clamp(0.,1.)}
-fn rotate_point(point:[f64;2],center:[f64;2],deg:f64)->[f64;2]{let r=(-deg).to_radians();let(c,s)=(r.cos(),r.sin());let(x,y)=(point[0]-center[0],point[1]-center[1]);[x*c-y*s,y*c+x*s]}
-fn graph_value(t:f64,graph:&FalloffGraph)->f64{let x=clamp01(t);match graph{FalloffGraph::Smoothstep=>x*x*(3.-2.*x),FalloffGraph::EaseIn=>x*x,FalloffGraph::EaseOut=>1.-(1.-x)*(1.-x),FalloffGraph::Linear=>x}}
-fn path_distance(point:[f64;2],path:&[[f64;2]])->f64{let mut best=f64::INFINITY;for pair in path.windows(2){let(a,b)=(pair[0],pair[1]);let(dx,dy)=(b[0]-a[0],b[1]-a[1]);let l2=dx*dx+dy*dy;let t=if l2<=f64::EPSILON{0.}else{clamp01(((point[0]-a[0])*dx+(point[1]-a[1])*dy)/l2)};let(x,y)=(a[0]+dx*t,a[1]+dy*t);best=best.min(((point[0]-x).powi(2)+(point[1]-y).powi(2)).sqrt());}best}
-pub fn evaluate_falloff(def:&FalloffDefinition,point:[f64;2])->Result<f64,RuntimeError>{let center=def.center.unwrap_or([0.,0.]);let size=def.size.unwrap_or([200.,200.]);let radius=def.radius.unwrap_or(size[0].max(size[1])/2.).max(f64::EPSILON);let base=match def.kind{FalloffKind::Circle=>1.-((point[0]-center[0]).powi(2)+(point[1]-center[1]).powi(2)).sqrt()/radius,FalloffKind::Rect=>{let p=rotate_point(point,center,def.rotation.unwrap_or(0.));1.-((p[0].abs()/(size[0].abs()/2.).max(f64::EPSILON)).max(p[1].abs()/(size[1].abs()/2.).max(f64::EPSILON)))},FalloffKind::Linear=>{let p=rotate_point(point,center,def.rotation.unwrap_or(0.));1.-((p[0]+size[0]/2.)/size[0].abs().max(f64::EPSILON))},FalloffKind::Sweep=>{let angle=((point[1]-center[1]).atan2(point[0]-center[0]).to_degrees()-def.rotation.unwrap_or(0.)).rem_euclid(360.);1.-angle/360.},FalloffKind::Path=>{let path=def.path.as_deref().unwrap_or(&[]);if path.len()<2{return Err(RuntimeError::Layer("falloff path requires two points".into()))}1.-path_distance(point,path)/radius}};let mut value=graph_value(clamp01(base),def.graph.as_ref().unwrap_or(&FalloffGraph::Linear));if def.invert.unwrap_or(false){value=1.-value}Ok(clamp01(value*def.strength.unwrap_or(1.)))}
-pub fn evaluate_falloffs(defs:&[FalloffDefinition],point:[f64;2])->Result<f64,RuntimeError>{if defs.is_empty(){return Ok(1.)}let mut result=1.;for def in defs{let v=evaluate_falloff(def,point)?;result=match def.combine.as_ref().unwrap_or(&FalloffCombine::Multiply){FalloffCombine::Multiply=>result*v,FalloffCombine::Add=>result+v,FalloffCombine::Max=>result.max(v),FalloffCombine::Min=>result.min(v)}}Ok(clamp01(result))}
-fn parse_rgb(color:&str)->[u8;3]{let h=color.trim_start_matches('#');let full=if h.len()==3{h.chars().flat_map(|c|[c,c]).collect::<String>()}else{h.to_string()};if full.len()<6{return[255,255,255]}[u8::from_str_radix(&full[0..2],16).unwrap_or(255),u8::from_str_radix(&full[2..4],16).unwrap_or(255),u8::from_str_radix(&full[4..6],16).unwrap_or(255)]}
-fn lerp_color(a:&str,b:&str,t:f64)->String{let(a,b)=(parse_rgb(a),parse_rgb(b));format!("#{:02x}{:02x}{:02x}",(a[0]as f64+(b[0]as f64-a[0]as f64)*t).round()as u8,(a[1]as f64+(b[1]as f64-a[1]as f64)*t).round()as u8,(a[2]as f64+(b[2]as f64-a[2]as f64)*t).round()as u8)}
-pub fn evaluate_particles(def:&ParticleDefinition,frame:u32,fps:f64)->Result<Vec<ParticleInstance>,RuntimeError>{let max=def.max_particles.unwrap_or(MAX_PARTICLES);if max==0||max>MAX_PARTICLES{return Err(RuntimeError::Budget)}if fps<=0.||def.rate<0.||def.lifetime_frames==0{return Ok(Vec::new())}let births=((frame as f64+1.)*def.rate/fps).floor()as usize;let first=births.saturating_sub(max);let mut out=Vec::new();for index in first..births{let birth=((index as f64)*fps/def.rate).floor()as u32;let Some(age)=frame.checked_sub(birth)else{continue};if age>=def.lifetime_frames{continue}let ctx=index_context(index,births.max(1),1,def.seed);let variance=def.velocity_variance.unwrap_or([0.,0.,0.]);let vel=[def.velocity[0]+(seeded_random(ctx,1)*2.-1.)*variance[0],def.velocity[1]+(seeded_random(ctx,2)*2.-1.)*variance[1],def.velocity[2]+(seeded_random(ctx,3)*2.-1.)*variance[2]];let g=def.gravity.unwrap_or([0.,0.,0.]);let p=def.position.unwrap_or([0.,0.,0.]);let af=age as f64;let t=af/def.lifetime_frames as f64;out.push(ParticleInstance{id:format!("{}:{}",def.id,index),index,birth_frame:birth,age_frames:age,normalized_age:t,position:[p[0]+vel[0]*af+.5*g[0]*af*af,p[1]+vel[1]*af+.5*g[1]*af*af,p[2]+vel[2]*af+.5*g[2]*af*af],scale:def.scale.map(|s|s[0]+(s[1]-s[0])*t).unwrap_or(1.),rotation:def.rotation.map(|r|r[0]+(r[1]-r[0])*t).unwrap_or(0.),color:def.color.as_ref().map(|c|lerp_color(&c[0],&c[1],t)).unwrap_or_else(||"#ffffff".into()),context:ctx});}Ok(out)}
+fn hash32(value: u32) -> u32 {
+    let mut x = value;
+    x ^= x >> 16;
+    x = x.wrapping_mul(0x7feb352d);
+    x ^= x >> 15;
+    x = x.wrapping_mul(0x846ca68b);
+    x ^= x >> 16;
+    x
+}
+pub fn index_context(index: usize, count: usize, depth: usize, seed: i64) -> IndexContext {
+    IndexContext {
+        index,
+        count,
+        depth,
+        normalized: if count <= 1 {
+            0.
+        } else {
+            index as f64 / (count - 1) as f64
+        },
+        seed: hash32((seed as u32) ^ ((index as u32 + 1).wrapping_mul(0x9e3779b1))),
+    }
+}
+pub fn seeded_random(context: IndexContext, salt: u32) -> f64 {
+    hash32(context.seed ^ salt.wrapping_add(1).wrapping_mul(0x85ebca6b)) as f64 / 4294967296.
+}
+fn off(base: Vec3, step: Option<Vec3>, index: usize) -> Vec3 {
+    if let Some(s) = step {
+        [
+            base[0] + s[0] * index as f64,
+            base[1] + s[1] * index as f64,
+            base[2] + s[2] * index as f64,
+        ]
+    } else {
+        base
+    }
+}
+fn sample_path(points: &[[f64; 2]], t: f64, closed: bool) -> [f64; 2] {
+    let mut p = points.to_vec();
+    if closed && p.len() > 1 {
+        p.push(p[0]);
+    }
+    let mut lens = Vec::new();
+    let mut total = 0.;
+    for pair in p.windows(2) {
+        let len = ((pair[1][0] - pair[0][0]).powi(2) + (pair[1][1] - pair[0][1]).powi(2)).sqrt();
+        lens.push(len);
+        total += len;
+    }
+    if total <= f64::EPSILON {
+        return p.first().copied().unwrap_or([0., 0.]);
+    }
+    let mut target = t.clamp(0., 1.) * total;
+    for (i, len) in lens.iter().copied().enumerate() {
+        if target <= len || i == lens.len() - 1 {
+            let q = if len <= f64::EPSILON {
+                0.
+            } else {
+                target / len
+            };
+            return [
+                p[i][0] + (p[i + 1][0] - p[i][0]) * q,
+                p[i][1] + (p[i + 1][1] - p[i][1]) * q,
+            ];
+        }
+        target -= len;
+    }
+    *p.last().unwrap()
+}
+fn distribution(def: &ReplicatorDefinition, index: usize) -> Result<Vec3, RuntimeError> {
+    Ok(match &def.distribution {
+        ReplicatorDistribution::Grid {
+            columns,
+            rows,
+            spacing,
+        } => {
+            let cols = *columns;
+            if cols == 0 {
+                return Err(RuntimeError::Layer(
+                    "replicator grid columns must be positive".into(),
+                ));
+            }
+            let r = (*rows).unwrap_or_else(|| def.count.div_ceil(cols));
+            let col = index % cols;
+            let row = index / cols;
+            [
+                (col as f64 - (cols as f64 - 1.) / 2.) * spacing[0],
+                (row as f64 - (r as f64 - 1.) / 2.) * spacing[1],
+                0.,
+            ]
+        }
+        ReplicatorDistribution::Radial {
+            radius,
+            start_angle,
+            end_angle,
+        } => {
+            let span = end_angle - start_angle;
+            let full = span.abs() >= 359.999;
+            let denom = if full {
+                def.count.max(1)
+            } else {
+                def.count.saturating_sub(1).max(1)
+            };
+            let a = (start_angle + span * index as f64 / denom as f64).to_radians();
+            [a.cos() * radius, a.sin() * radius, 0.]
+        }
+        ReplicatorDistribution::Path { points, closed } => {
+            if points.len() < 2 {
+                return Err(RuntimeError::Layer(
+                    "replicator path requires two points".into(),
+                ));
+            }
+            let t = if def.count <= 1 {
+                0.
+            } else {
+                index as f64 / (def.count - 1) as f64
+            };
+            let p = sample_path(points, t, closed.unwrap_or(false));
+            [p[0], p[1], 0.]
+        }
+    })
+}
+pub fn evaluate_replicator(
+    def: &ReplicatorDefinition,
+) -> Result<Vec<ProceduralInstance>, RuntimeError> {
+    if def.count == 0 || def.count > MAX_PROCEDURAL_INSTANCES {
+        return Err(RuntimeError::Budget);
+    }
+    let mut out = Vec::with_capacity(def.count);
+    for index in 0..def.count {
+        let context = index_context(index, def.count, 0, def.seed);
+        out.push(ProceduralInstance {
+            id: format!("{}:{}", def.id, index),
+            position: off(distribution(def, index)?, def.position_offset, index),
+            rotation: off([0., 0., 0.], def.rotation_offset, index),
+            scale: off([1., 1., 1.], def.scale_offset, index),
+            time_offset_frames: def.time_offset_frames.unwrap_or(0.) * index as f64,
+            context,
+        });
+    }
+    Ok(out)
+}
+fn clamp01(v: f64) -> f64 {
+    v.clamp(0., 1.)
+}
+fn rotate_point(point: [f64; 2], center: [f64; 2], deg: f64) -> [f64; 2] {
+    let r = (-deg).to_radians();
+    let (c, s) = (r.cos(), r.sin());
+    let (x, y) = (point[0] - center[0], point[1] - center[1]);
+    [x * c - y * s, y * c + x * s]
+}
+fn graph_value(t: f64, graph: &FalloffGraph) -> f64 {
+    let x = clamp01(t);
+    match graph {
+        FalloffGraph::Smoothstep => x * x * (3. - 2. * x),
+        FalloffGraph::EaseIn => x * x,
+        FalloffGraph::EaseOut => 1. - (1. - x) * (1. - x),
+        FalloffGraph::Linear => x,
+    }
+}
+fn path_distance(point: [f64; 2], path: &[[f64; 2]]) -> f64 {
+    let mut best = f64::INFINITY;
+    for pair in path.windows(2) {
+        let (a, b) = (pair[0], pair[1]);
+        let (dx, dy) = (b[0] - a[0], b[1] - a[1]);
+        let l2 = dx * dx + dy * dy;
+        let t = if l2 <= f64::EPSILON {
+            0.
+        } else {
+            clamp01(((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / l2)
+        };
+        let (x, y) = (a[0] + dx * t, a[1] + dy * t);
+        best = best.min(((point[0] - x).powi(2) + (point[1] - y).powi(2)).sqrt());
+    }
+    best
+}
+pub fn evaluate_falloff(def: &FalloffDefinition, point: [f64; 2]) -> Result<f64, RuntimeError> {
+    let center = def.center.unwrap_or([0., 0.]);
+    let size = def.size.unwrap_or([200., 200.]);
+    let radius = def
+        .radius
+        .unwrap_or(size[0].max(size[1]) / 2.)
+        .max(f64::EPSILON);
+    let base = match def.kind {
+        FalloffKind::Circle => {
+            1. - ((point[0] - center[0]).powi(2) + (point[1] - center[1]).powi(2)).sqrt() / radius
+        }
+        FalloffKind::Rect => {
+            let p = rotate_point(point, center, def.rotation.unwrap_or(0.));
+            1. - ((p[0].abs() / (size[0].abs() / 2.).max(f64::EPSILON))
+                .max(p[1].abs() / (size[1].abs() / 2.).max(f64::EPSILON)))
+        }
+        FalloffKind::Linear => {
+            let p = rotate_point(point, center, def.rotation.unwrap_or(0.));
+            1. - ((p[0] + size[0] / 2.) / size[0].abs().max(f64::EPSILON))
+        }
+        FalloffKind::Sweep => {
+            let angle = ((point[1] - center[1])
+                .atan2(point[0] - center[0])
+                .to_degrees()
+                - def.rotation.unwrap_or(0.))
+            .rem_euclid(360.);
+            1. - angle / 360.
+        }
+        FalloffKind::Path => {
+            let path = def.path.as_deref().unwrap_or(&[]);
+            if path.len() < 2 {
+                return Err(RuntimeError::Layer(
+                    "falloff path requires two points".into(),
+                ));
+            }
+            1. - path_distance(point, path) / radius
+        }
+    };
+    let mut value = graph_value(
+        clamp01(base),
+        def.graph.as_ref().unwrap_or(&FalloffGraph::Linear),
+    );
+    if def.invert.unwrap_or(false) {
+        value = 1. - value
+    }
+    Ok(clamp01(value * def.strength.unwrap_or(1.)))
+}
+pub fn evaluate_falloffs(defs: &[FalloffDefinition], point: [f64; 2]) -> Result<f64, RuntimeError> {
+    if defs.is_empty() {
+        return Ok(1.);
+    }
+    let mut result = 1.;
+    for def in defs {
+        let v = evaluate_falloff(def, point)?;
+        result = match def.combine.as_ref().unwrap_or(&FalloffCombine::Multiply) {
+            FalloffCombine::Multiply => result * v,
+            FalloffCombine::Add => result + v,
+            FalloffCombine::Max => result.max(v),
+            FalloffCombine::Min => result.min(v),
+        }
+    }
+    Ok(clamp01(result))
+}
+fn parse_rgb(color: &str) -> [u8; 3] {
+    let h = color.trim_start_matches('#');
+    let full = if h.len() == 3 {
+        h.chars().flat_map(|c| [c, c]).collect::<String>()
+    } else {
+        h.to_string()
+    };
+    if full.len() < 6 {
+        return [255, 255, 255];
+    }
+    [
+        u8::from_str_radix(&full[0.0.2], 16).unwrap_or(255),
+        u8::from_str_radix(&full[2.0.4], 16).unwrap_or(255),
+        u8::from_str_radix(&full[4.0.6], 16).unwrap_or(255),
+    ]
+}
+fn lerp_color(a: &str, b: &str, t: f64) -> String {
+    let (a, b) = (parse_rgb(a), parse_rgb(b));
+    format!(
+        "#{:02x}{:02x}{:02x}",
+        (a[0] as f64 + (b[0] as f64 - a[0] as f64) * t).round() as u8,
+        (a[1] as f64 + (b[1] as f64 - a[1] as f64) * t).round() as u8,
+        (a[2] as f64 + (b[2] as f64 - a[2] as f64) * t).round() as u8
+    )
+}
+pub fn evaluate_particles(
+    def: &ParticleDefinition,
+    frame: u32,
+    fps: f64,
+) -> Result<Vec<ParticleInstance>, RuntimeError> {
+    let max = def.max_particles.unwrap_or(MAX_PARTICLES);
+    if max == 0 || max > MAX_PARTICLES {
+        return Err(RuntimeError::Budget);
+    }
+    if fps <= 0. || def.rate < 0. || def.lifetime_frames == 0 {
+        return Ok(Vec::new());
+    }
+    let births = ((frame as f64 + 1.) * def.rate / fps).floor() as usize;
+    let first = births.saturating_sub(max);
+    let mut out = Vec::new();
+    for index in first..births {
+        let birth = ((index as f64) * fps / def.rate).floor() as u32;
+        let Some(age) = frame.checked_sub(birth) else {
+            continue;
+        };
+        if age >= def.lifetime_frames {
+            continue;
+        }
+        let ctx = index_context(index, births.max(1), 1, def.seed);
+        let variance = def.velocity_variance.unwrap_or([0., 0., 0.]);
+        let vel = [
+            def.velocity[0] + (seeded_random(ctx, 1) * 2. - 1.) * variance[0],
+            def.velocity[1] + (seeded_random(ctx, 2) * 2. - 1.) * variance[1],
+            def.velocity[2] + (seeded_random(ctx, 3) * 2. - 1.) * variance[2],
+        ];
+        let g = def.gravity.unwrap_or([0., 0., 0.]);
+        let p = def.position.unwrap_or([0., 0., 0.]);
+        let af = age as f64;
+        let t = af / def.lifetime_frames as f64;
+        out.push(ParticleInstance {
+            id: format!("{}:{}", def.id, index),
+            index,
+            birth_frame: birth,
+            age_frames: age,
+            normalized_age: t,
+            position: [
+                p[0] + vel[0] * af + 0.5 * g[0] * af * af,
+                p[1] + vel[1] * af + 0.5 * g[1] * af * af,
+                p[2] + vel[2] * af + 0.5 * g[2] * af * af,
+            ],
+            scale: def.scale.map(|s| s[0] + (s[1] - s[0]) * t).unwrap_or(1.),
+            rotation: def.rotation.map(|r| r[0] + (r[1] - r[0]) * t).unwrap_or(0.),
+            color: def
+                .color
+                .as_ref()
+                .map(|c| lerp_color(&c[0], &c[1], t))
+                .unwrap_or_else(|| "#ffffff".into()),
+            context: ctx,
+        });
+    }
+    Ok(out)
+}
