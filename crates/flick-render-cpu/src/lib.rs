@@ -89,7 +89,7 @@ impl CpuRenderer {
         out: &mut RgbaFrame,
         p: &TextPrimitive,
         layer_opacity: f32,
-        fonts: &HashMap<String, &&FontResource>,
+        fonts: &HashMap<String, &FontResource>,
     ) -> Result<(), RenderError> {
         let mut grouped: HashMap<(&str, u32, u32), Vec<&GlyphInstance>> = HashMap::new();
         for glyph in &p.glyphs {
