@@ -53,7 +53,7 @@
 
 ### Task 5: Candidate ranking and guarded acceptance
 - [x] Add generation-specific QC.
- [x] Rank multiple candidates with product fidelity weighted most heavily.
+- [x] Rank multiple candidates with product fidelity weighted most heavily.
 - [x] Import only approved candidates through normal generation acceptance/provenance.
 - [x] Reject the batch when no candidate passes.
 
