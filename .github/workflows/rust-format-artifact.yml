@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   format:
-    if: ${{ !contains(github.event.head_commit.message, 'style: normalize and rustfmt native workspace') }}
+    if: "${{ !contains(github.event.head_commit.message, 'style: normalize and rustfmt native workspace') }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
