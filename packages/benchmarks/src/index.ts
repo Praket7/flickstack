@@ -39,6 +39,7 @@ export function summarizeBenchmark(input: { hardware: HardwareFingerprint; proje
   };
 }
 export function compareBenchmark(baseline: BenchmarkSummary, current: BenchmarkSummary, tolerance = { throughput: 0.15, p95: 0.20 }) {
+  if (baseline.hardwareId !== hardwareFingerprintId(baseline.hardware) || current.hardwareId !== hardwareFingerprintId(current.hardware)) throw new Error('Benchmark hardware fingerprint does not match its hardware metadata');
   if (baseline.hardwareId !== current.hardwareId) throw new Error('Benchmark hardware fingerprints do not match; cross-hardware regression claims are invalid');
   if (baseline.projectHash !== current.projectHash) throw new Error('Benchmark project hashes do not match');
   const throughputDrop = baseline.medianFps > 0 ? (baseline.medianFps - current.medianFps) / baseline.medianFps : 0;
