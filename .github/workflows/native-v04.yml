@@ -39,7 +39,17 @@ jobs:
       - name: Rust clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Rust tests
-        run: cargo test --workspace
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test --workspace --all-targets 2>&1 | tee rust-tests.log
+      - name: Upload Rust test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-rust-test-log
+          path: rust-tests.log
+          if-no-files-found: ignore
 
   tracking-opencv:
     runs-on: ubuntu-latest
@@ -49,9 +59,19 @@ jobs:
       - name: Install OpenCV development runtime
         run: sudo apt-get update && sudo apt-get install -y libopencv-dev clang libclang-dev pkg-config
       - name: Test OpenCV tracking backend
+        shell: bash
         env:
           OPENCV_LINK_LIBS: opencv_core,opencv_imgproc,opencv_video,opencv_videoio,opencv_features2d,opencv_calib3d
-        run: cargo test -p flick-tracking-opencv --features opencv-backend
+        run: |
+          set -o pipefail
+          cargo test -p flick-tracking-opencv --features opencv-backend 2>&1 | tee tracking-opencv.log
+      - name: Upload OpenCV diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-opencv-test-log
+          path: tracking-opencv.log
+          if-no-files-found: ignore
 
   desktop-package:
     strategy:
@@ -78,9 +98,27 @@ jobs:
         run: choco install ffmpeg -y
       - run: node --experimental-strip-types apps/desktop/build.ts
       - run: cargo install tauri-cli --version '2.11.5' --locked
-      - name: Build Tauri bundles
+      - name: Build Tauri bundle macOS
+        if: matrix.name == 'macos'
+        shell: bash
         working-directory: apps/desktop
-        run: cargo tauri build
+        run: |
+          set -o pipefail
+          cargo tauri build 2>&1 | tee tauri-build.log
+      - name: Build Tauri bundle Windows
+        if: matrix.name == 'windows'
+        shell: pwsh
+        working-directory: apps/desktop
+        run: |
+          cargo tauri build *>&1 | Tee-Object -FilePath tauri-build.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload Tauri build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flicksmith-v04-${{ matrix.name }}-build-log
+          path: apps/desktop/tauri-build.log
+          if-no-files-found: ignore
       - name: Smoke desktop binary macOS
         if: matrix.name == 'macos'
         run: node --experimental-strip-types scripts/smoke-desktop-package.ts package-smoke.json apps/desktop/src-tauri/target/release/flicksmith-desktop
