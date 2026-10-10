@@ -196,6 +196,14 @@ impl MotionRuntime {
         frame: u32,
         surface: RenderSurface,
     ) -> Result<EvaluatedScene, RuntimeError> {
+        self.evaluate_with_audio(frame, surface, None)
+    }
+    pub fn evaluate_with_audio(
+        &self,
+        frame: u32,
+        surface: RenderSurface,
+        audio_override: Option<[f64; 4]>,
+    ) -> Result<EvaluatedScene, RuntimeError> {
         if frame as f64 >= self.program.surface.duration_frames {
             return Err(RuntimeError::Frame);
         }
@@ -223,7 +231,7 @@ impl MotionRuntime {
                     da.total_cmp(&db)
                 })
             });
-        let audio = sample_audio(&self.program, frame as f64);
+        let audio = audio_override.unwrap_or_else(|| sample_audio(&self.program, frame as f64));
         let mut local = HashMap::<String, LocalLayerState>::new();
         for (index, l) in self.program.layers.iter().enumerate() {
             let id = l
