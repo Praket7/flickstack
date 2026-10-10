@@ -2,7 +2,7 @@ name: FlickSmith v0.4 Native Verification
 
 on:
   push:
-    branches: [main, 'feature/flicksmith-v0.4-professional-motion-engine']
+    branches: [main, 'feature/flicksmith-v0.4-professional-motion-engine', 'feature/flicksmith-v0.5-final']
   pull_request:
   workflow_dispatch:
 
