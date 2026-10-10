@@ -50,7 +50,11 @@ pub fn validate_request(request: &OpenFxRequest) -> Result<(), String> {
     if request.plugin_id.trim().is_empty() || request.effect_id.trim().is_empty() {
         return Err("plugin_id and effect_id are required".into());
     }
-    if request.width == 0 || request.height == 0 || request.width > 16_384 || request.height > 16_384 {
+    if request.width == 0
+        || request.height == 0
+        || request.width > 16_384
+        || request.height > 16_384
+    {
         return Err("frame dimensions are outside host limits".into());
     }
     match request.pixel_format.as_str() {
@@ -98,7 +102,7 @@ pub fn run_isolated(
         match child.try_wait().map_err(|error| error.to_string())? {
             Some(status) => {
                 let mut stdout = Vec::new();
-                if let Some(mut pipe) = child.stdout.take() {
+                if let Some(pipe) = child.stdout.take() {
                     pipe.take(policy.max_output_bytes as u64 + 1)
                         .read_to_end(&mut stdout)
                         .map_err(|error| error.to_string())?;
