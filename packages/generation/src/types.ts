@@ -1,6 +1,7 @@
 import type { GenerationKind } from '../../schema/src/v3/project.ts';
 export interface GenerationBudget { maxUnits?:number; maxCostUsd?:number }
-export interface GenerationRequest { id:string; projectId:string; kind:GenerationKind; prompt?:string; inputAssetIds:string[]; parameters:Record<string,unknown>; seed?:number|string; provider?:string; model?:string; previousResponseId?:string; budget?:GenerationBudget }
+export interface VideoGenerationControls { firstFrameAssetId?:string; lastFrameAssetId?:string; referenceAssetIds?:string[]; negativePrompt?:string; durationSeconds?:number; resolution?:string; aspectRatio?:string; camera?:Record<string,unknown>; motionMaskAssetIds?:string[]; extendVideoAssetId?:string; candidateCount?:number; nativeAudio?:boolean }
+export interface GenerationRequest { id:string; projectId:string; kind:GenerationKind; prompt?:string; inputAssetIds:string[]; parameters:Record<string,unknown>; video?:VideoGenerationControls; seed?:number|string; provider?:string; model?:string; previousResponseId?:string; budget?:GenerationBudget }
 
 export interface VideoProviderCapabilities {
  supportsFirstFrame:boolean;
