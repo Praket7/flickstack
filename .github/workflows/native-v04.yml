@@ -18,8 +18,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Ensure FFmpeg
+        run: command -v ffmpeg >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y ffmpeg)
       - run: npm install
       - run: npm run typecheck
       - run: npm test
@@ -90,10 +90,11 @@ jobs:
       - run: npm install
       - name: macOS FFmpeg
         if: matrix.name == 'macos'
-        run: brew install ffmpeg
+        run: command -v ffmpeg >/dev/null 2>&1 || brew install ffmpeg
       - name: Windows FFmpeg
         if: matrix.name == 'windows'
-        run: choco install ffmpeg -y
+        shell: pwsh
+        run: if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) { choco install ffmpeg -y }
       - run: node --experimental-strip-types apps/desktop/build.ts
       - name: Install Tauri CLI
         run: npm install --global @tauri-apps/cli@2.11.1
