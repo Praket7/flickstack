@@ -95,20 +95,21 @@ jobs:
         if: matrix.name == 'windows'
         run: choco install ffmpeg -y
       - run: node --experimental-strip-types apps/desktop/build.ts
-      - run: cargo install tauri-cli --version '2.11.5' --locked
+      - name: Install Tauri CLI
+        run: npm install --global @tauri-apps/cli@2.11.5
       - name: Build Tauri bundle macOS
         if: matrix.name == 'macos'
         shell: bash
         working-directory: apps/desktop
         run: |
           set -o pipefail
-          cargo tauri build 2>&1 | tee tauri-build.log
+          tauri build 2>&1 | tee tauri-build.log
       - name: Build Tauri bundle Windows
         if: matrix.name == 'windows'
         shell: pwsh
         working-directory: apps/desktop
         run: |
-          cargo tauri build *>&1 | Tee-Object -FilePath tauri-build.log
+          tauri build *>&1 | Tee-Object -FilePath tauri-build.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload Tauri build diagnostics
         if: always()
