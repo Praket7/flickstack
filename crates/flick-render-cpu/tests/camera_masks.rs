@@ -15,7 +15,7 @@ fn camera_projects_depth_planes() {
     };
     let a = c.project([0., 0., 0.], [1920., 1080.]).unwrap();
     let b = c.project([100., 0., 0.], [1920., 1080.]).unwrap();
-    assert_eq!(&a[.0.2],&[960.,540.]);
+    assert_eq!(&a[0.0.2], &[960., 540.]);
     assert!(b[0] > 960.);
 }
 #[test]
