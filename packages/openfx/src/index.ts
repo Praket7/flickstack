@@ -40,7 +40,7 @@ export class IsolatedOpenFxHost {
     if (!options.permittedPluginRoots.length) throw new Error('At least one permitted OpenFX plugin root is required');
     this.#hostExecutable = options.hostExecutable;
     this.#hostArguments = [...(options.hostArguments ?? [])];
-    this.#roots = options.permittedPluginRoots.map(resolve);
+    this.#roots = options.permittedPluginRoots.map((root) => resolve(root));
     this.#timeoutMs = Math.max(100, options.timeoutMs ?? 30_000);
   }
 
