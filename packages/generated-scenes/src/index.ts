@@ -4,3 +4,5 @@ export * from './occlusion.ts';
 export * from './depth.ts';
 export * from './assemble.ts';
 export * from './motion.ts';
+export * from './anchors.ts';
+export * from './shot-router.ts';
