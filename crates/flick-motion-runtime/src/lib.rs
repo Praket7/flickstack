@@ -132,10 +132,7 @@ fn sample_envelope(value: Option<&Value>, frame: f64) -> f64 {
             .unwrap_or(0.0);
     }
     let point = |value: &Value| -> Option<(f64, f64)> {
-        Some((
-            value.get("frame")?.as_f64()?,
-            value.get("value")?.as_f64()?,
-        ))
+        Some((value.get("frame")?.as_f64()?, value.get("value")?.as_f64()?))
     };
     let Some(first) = points.first().and_then(point) else {
         return 0.0;
@@ -173,8 +170,7 @@ fn sample_audio(program: &RenderProgramV1, frame: f64) -> [f64; 4] {
         return [0.0; 4];
     };
     let envelopes = analysis.get("envelopes").unwrap_or(&Value::Null);
-    ["energy", "low", "mid", "high"]
-        .map(|signal| sample_envelope(envelopes.get(signal), frame))
+    ["energy", "low", "mid", "high"].map(|signal| sample_envelope(envelopes.get(signal), frame))
 }
 
 pub struct MotionRuntime {
