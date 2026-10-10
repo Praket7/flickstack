@@ -34,7 +34,8 @@ function capable(m:ProviderCapabilityManifest,r:GenerationRequest,req:Generation
 
 function fitness(m:ProviderCapabilityManifest,r:GenerationRequest,req:GenerationRequirements):number{
  let score=0;
- if(r.kind==='video'&&!req.execution&&m.execution==='local')score+=1000;
+ if(!req.execution&&m.execution==='local')score+=1000;
+ if(m.estimatedCostUnits===0)score+=100;
  if(r.model&&m.models?.includes(r.model))score+=100;
  if(req.video&&m.video){
   const bools:Array<[keyof GenerationVideoRequirements,keyof VideoProviderCapabilities]>= [
