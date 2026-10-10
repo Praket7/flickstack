@@ -8,8 +8,8 @@ test('SDK accepts permissioned extensions and rejects general shell/project auth
     permissions: ['network', 'write-staging', 'credential-handle'], entrypoint: './index.js',
   });
   assert.equal(manifest.id, 'example.generator');
-  assert.throws(() => validateExtensionManifest({ ...manifest, permissions: ['shell'] as never }), /permission/i);
-  assert.throws(() => validateExtensionManifest({ ...manifest, permissions: ['write-project'] as never }), /permission/i);
+  assert.throws(() => validateExtensionManifest({ ...manifest, permissions: ['shell'] } as any), /permission/i);
+  assert.throws(() => validateExtensionManifest({ ...manifest, permissions: ['write-project'] } as any), /permission/i);
 });
 
 test('registry rejects duplicate ids and incompatible API versions', () => {
