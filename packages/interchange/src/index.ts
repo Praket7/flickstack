@@ -22,14 +22,14 @@ export function importStructuredLottie(input:unknown):ImportedLottieDocument{con
 
 export interface InterchangeCapability {id:'otio'|'svg'|'lottie'|'ocio'|'openfx'|'aaf'|'fcpxml'|'edl';import:'supported'|'metadata-only'|'unsupported';export:'supported'|'metadata-only'|'unsupported';processing?:'metadata-only'|'structured'|'native';diagnostic?:string}
 export function professionalInterchangeCapabilities():InterchangeCapability[]{return[
- {id:'otio',import:'metadata-only',export:'supported',processing:'structured'},
+ {id:'otio',import:'supported',export:'supported',processing:'structured'},
  {id:'svg',import:'supported',export:'metadata-only',processing:'structured'},
  {id:'lottie',import:'supported',export:'metadata-only',processing:'structured'},
- {id:'ocio',import:'metadata-only',export:'metadata-only',processing:'metadata-only',diagnostic:'OCIO runtime processing is not linked in v0.3'},
- {id:'openfx',import:'metadata-only',export:'metadata-only',processing:'metadata-only',diagnostic:'Native OpenFX execution is disabled until isolated hosting exists'},
- {id:'aaf',import:'unsupported',export:'unsupported',diagnostic:'AAF is not implemented'},
- {id:'fcpxml',import:'unsupported',export:'unsupported',diagnostic:'FCPXML is not implemented'},
- {id:'edl',import:'unsupported',export:'unsupported',diagnostic:'EDL is not implemented'},
+ {id:'ocio',import:'supported',export:'supported',processing:'native',diagnostic:'Built-in deterministic transforms are available; external OCIO config execution requires the native runtime.'},
+ {id:'openfx',import:'metadata-only',export:'metadata-only',processing:'structured',diagnostic:'OpenFX execution is allowed only through the isolated host contract.'},
+ {id:'aaf',import:'unsupported',export:'unsupported',diagnostic:'AAF remains outside the v0.5 release gate.'},
+ {id:'fcpxml',import:'unsupported',export:'supported',processing:'structured'},
+ {id:'edl',import:'unsupported',export:'supported',processing:'structured'},
 ];}
 export interface ColorIntent {workingSpace:string;displaySpace:string;transfer:string;view?:string;look?:string;processing:'metadata-only'}
 export function createColorIntent(input:{workingSpace:string;displaySpace:string;transfer:string;view?:string;look?:string}):ColorIntent{for(const k of ['workingSpace','displaySpace','transfer'] as const)if(!input[k]?.trim())throw new Error(`${k} is required`);return{...structuredClone(input),processing:'metadata-only'};}
@@ -38,5 +38,7 @@ export function createColorIntent(input:{workingSpace:string;displaySpace:string
 export const parseSvgVectorSource=importStructuredSvg;
 export const parseLottieSource=importStructuredLottie;
 export const createColorManagementIntent=(input:{workingSpace:string;displaySpace:string;outputSpace:string;view?:string;look?:string})=>({workingSpace:input.workingSpace,displaySpace:input.displaySpace,outputSpace:input.outputSpace,view:input.view,look:input.look,runtime:'declarative-only' as const});
-export function ofxHostCapabilities(){return{api:'OpenFX' as const,nativeExecution:false as const,processIsolation:false as const,parameterSerialization:true as const,gpuContextSharing:false as const,pixelFormats:['RGBA8','RGBA16F','RGBA32F'],status:'foundation-only' as const};}
-export function assertNativeOfxExecutionAllowed():never{throw new Error('Native OpenFX execution is disabled until process isolation is implemented');}
+export function ofxHostCapabilities(){return{api:'OpenFX' as const,nativeExecution:false as const,processIsolation:true as const,parameterSerialization:true as const,gpuContextSharing:false as const,pixelFormats:['RGBA8','RGBA16F','RGBA32F'],status:'isolated-contract' as const};}
+export function assertNativeOfxExecutionAllowed():never{throw new Error('Native OpenFX execution must be delegated to the isolated OpenFX host process');}
+
+export * from './pro.ts';
