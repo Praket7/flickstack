@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {GenerationProviderRegistry,type GenerationProvider,type ProviderCapabilityManifest} from '../src/index.ts';
+const p=(id:string,execution:'local'|'cloud',cost:number):GenerationProvider=>({manifest:():ProviderCapabilityManifest=>({provider:id,kinds:['image-edit'],execution,supportsTransparency:false,supportsMasks:true,supportsReferences:true,supportsStreaming:false,supportsCancellation:true,estimatedUnit:'image',estimatedCostUnits:cost}),generate:async()=>({requestId:'r',provider:id,model:'m',outputs:[]})});
+test('unqualified generation prefers a zero-cost local provider over cloud',()=>{const r=new GenerationProviderRegistry();r.register(p('a-cloud','cloud',1));r.register(p('z-local','local',0));const selected=r.resolve({id:'r',projectId:'p',kind:'image-edit',inputAssetIds:['x'],parameters:{}});assert.equal(selected.manifest().provider,'z-local')});
+test('explicit cloud execution remains available when requested',()=>{const r=new GenerationProviderRegistry();r.register(p('a-cloud','cloud',1));r.register(p('z-local','local',0));const selected=r.resolve({id:'r',projectId:'p',kind:'image-edit',inputAssetIds:['x'],parameters:{}},{execution:'cloud'});assert.equal(selected.manifest().provider,'a-cloud')});
