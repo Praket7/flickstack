@@ -146,9 +146,9 @@ pub(crate) fn layout_text(
     layout.break_all_lines(request.max_width);
     let align = match request.align {
         TextAlign::Left => Alignment::Start,
-        TextAlign::Center => Alignment::Middle,
+        TextAlign::Center => Alignment::Center,
         TextAlign::Right => Alignment::End,
-        TextAlign::Justify => Alignment::Justified,
+        TextAlign::Justify => Alignment::Justify,
     };
     layout.align(align, AlignmentOptions::default());
 
