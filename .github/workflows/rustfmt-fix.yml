@@ -15,6 +15,18 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.88.0
         with:
           components: rustfmt
+      - name: Normalize legacy leading-dot float literals
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          pattern = re.compile(r'(?<![A-Za-z0-9_\)\]])\.(\d)')
+          for path in Path('crates').rglob('*.rs'):
+              text = path.read_text()
+              fixed = pattern.sub(r'0.\1', text)
+              if fixed != text:
+                  path.write_text(fixed)
+          PY
       - name: Run rustfmt and capture diagnostics
         run: |
           set +e
@@ -28,5 +40,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -- '*.rs' rustfmt-diagnostic.txt
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'chore(ci): capture canonical rustfmt result'
+          git commit -m 'style(rust): normalize literals and apply canonical rustfmt'
           git push origin HEAD:feature/flicksmith-v0.5-final
