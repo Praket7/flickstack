@@ -6,24 +6,24 @@ import { JobStore } from '../../../packages/jobs/src/store.ts';
 import { GenerationProviderRegistry, GenerationRuntime, OpenAIImageProvider } from '../../../packages/generation/src/index.ts';
 import { buildCreativeActionPlan } from '../../../packages/agent/src/director.ts';
 import { validateCreativeActionPlan } from '../../../packages/agent/src/actions.ts';
-import { planCampaignVariants } from '../../../packages/agent/src/variants.ts';
-import { mapQcIssuesToRepairs } from '../../../packages/agent/src/repair.ts';
+import { planResponsiveVariants } from '../../../packages/agent/src/variants.ts';
+import { planRepairs } from '../../../packages/agent/src/repair.ts';
 import { buildCraftDirection, evaluateHumanCraft } from '../../../packages/creative-quality/src/index.ts';
-import { generationToolCatalog, generatedSceneToolCatalog, v3ToolCatalog, type ToolDefinition } from './tools.ts';
+import { v3ToolCatalog, type McpTool } from './tools.ts';
 import { V3FlickSmithHost } from './host-v3.ts';
 
 const protocolVersion = '2025-06-18';
 const projectPath = resolve(process.env.FLICKSMITH_PROJECT ?? 'project.flick.json');
 
-const extraTools: ToolDefinition[] = [
+const extraTools: McpTool[] = [
   { name:'build_craft_direction', description:'Build a brand-specific human-crafted visual and sound grammar that explicitly rejects generic AI-ad defaults.', inputSchema:{ type:'object', required:['brand','audience','objective'], properties:{ brand:{type:'string'}, audience:{type:'string'}, objective:{type:'string'}, references:{type:'array',items:{type:'string'}} }, additionalProperties:false } },
   { name:'review_human_craft', description:'Score an edit for template repetition, decorative motion, transition spam, mechanical pacing, generic typography, weak sound design, and lack of brand-specific decisions.', inputSchema:{ type:'object', required:['shots','typographyStyles','soundEvents','brandSpecificChoices'], properties:{ shots:{type:'array',items:{type:'object'}}, typographyStyles:{type:'array',items:{type:'string'}}, soundEvents:{type:'array',items:{type:'string'}}, brandSpecificChoices:{type:'number'} }, additionalProperties:false } },
   { name:'create_creative_action_plan', description:'Create an evidence-first creative action plan. Existing source media is preferred; generation is used only for justified coverage gaps.', inputSchema:{ type:'object', required:['input'], properties:{ input:{type:'object'} }, additionalProperties:false } },
   { name:'validate_creative_plan', description:'Validate a declarative creative action plan and reject cycles, executable payloads, unsafe generation rationale, or invalid dependencies.', inputSchema:{ type:'object', required:['plan'], properties:{ plan:{type:'object'} }, additionalProperties:false } },
   { name:'plan_campaign_variants', description:'Plan responsive campaign variants that preserve semantic/locked layers and reuse existing assets by default.', inputSchema:{ type:'object', required:['input'], properties:{ input:{type:'object'} }, additionalProperties:false } },
-  { name:'map_qc_repairs', description:'Map QC failures to localized declarative repair actions instead of global regeneration.', inputSchema:{ type:'object', required:['issues','targetCompositionId'], properties:{ issues:{type:'array',items:{type:'object'}}, targetCompositionId:{type:'string'} }, additionalProperties:false } },
+  { name:'map_qc_repairs', description:'Map QC failures to localized declarative repair actions instead of global regeneration.', inputSchema:{ type:'object', required:['issues'], properties:{ issues:{type:'array',items:{type:'object'}}, allowRegeneration:{type:'boolean'} }, additionalProperties:false } },
 ];
-const tools = [...v3ToolCatalog, ...generationToolCatalog, ...generatedSceneToolCatalog, ...extraTools];
+const tools = [...v3ToolCatalog, ...extraTools];
 
 function mediaType(path: string): string {
   switch (extname(path).toLowerCase()) {
@@ -56,8 +56,8 @@ async function callTool(name: string, args: any): Promise<unknown> {
   if (name === 'review_human_craft') return evaluateHumanCraft(args);
   if (name === 'create_creative_action_plan') return buildCreativeActionPlan(args.input);
   if (name === 'validate_creative_plan') return validateCreativeActionPlan(args.plan);
-  if (name === 'plan_campaign_variants') return planCampaignVariants(args.input);
-  if (name === 'map_qc_repairs') return mapQcIssuesToRepairs(args.issues, args.targetCompositionId);
+  if (name === 'plan_campaign_variants') return planResponsiveVariants(loadProject(), args.input);
+  if (name === 'map_qc_repairs') return planRepairs(args.issues, loadProject(), { allowRegeneration: args.allowRegeneration === true });
 
   const project = loadProject();
   const host = new V3FlickSmithHost({ project, projectPath, permittedRoots:[dirname(projectPath),process.cwd()], generation, generationAssetRoot: resolve(dirname(projectPath), '.flick/generated') });
