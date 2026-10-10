@@ -2,7 +2,7 @@ use serde_json::Value;
 
 pub type Vec3 = [f64; 3];
 fn clamp01(v: f64) -> f64 {
-    v.max(0.0).min(1.0)
+    v.clamp(0.0, 1.0)
 }
 fn cubic(a: f64, b: f64, c: f64, d: f64, t: f64) -> f64 {
     let u = 1.0 - t;
