@@ -9,11 +9,20 @@ use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum TextAlign { Left, Center, Right, Justify }
+pub enum TextAlign {
+    Left,
+    Center,
+    Right,
+    Justify,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum TextDirection { Ltr, Rtl, Mixed }
+pub enum TextDirection {
+    Ltr,
+    Rtl,
+    Mixed,
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TextLayoutRequest {
@@ -59,12 +68,20 @@ pub enum TextError {
 
 fn direction(text: &str) -> TextDirection {
     let rtl = text.chars().any(|c| matches!(c as u32, 0x0590..=0x08ff));
-    let ltr = text.chars().any(|c| c.is_ascii_alphabetic() || matches!(c as u32, 0x00c0..=0x02af));
-    match (ltr, rtl) { (true, true) => TextDirection::Mixed, (false, true) => TextDirection::Rtl, _ => TextDirection::Ltr }
+    let ltr = text
+        .chars()
+        .any(|c| c.is_ascii_alphabetic() || matches!(c as u32, 0x00c0..=0x02af));
+    match (ltr, rtl) {
+        (true, true) => TextDirection::Mixed,
+        (false, true) => TextDirection::Rtl,
+        _ => TextDirection::Ltr,
+    }
 }
 
 fn family_source(families: &[String]) -> String {
-    if families.is_empty() { return "sans-serif".into(); }
+    if families.is_empty() {
+        return "sans-serif".into();
+    }
     let mut values: Vec<String> = families
         .iter()
         .map(|family| format!("\"{}\"", family.replace('"', "\\\"")))
@@ -86,35 +103,52 @@ pub(crate) fn layout_text(
     layout_cx: &mut parley::LayoutContext<()>,
     request: &TextLayoutRequest,
 ) -> Result<TextLayout, TextError> {
-    if !request.font_size.is_finite() || request.font_size <= 0.0
-        || !request.line_height.is_finite() || request.line_height <= 0.0
+    if !request.font_size.is_finite()
+        || request.font_size <= 0.0
+        || !request.line_height.is_finite()
+        || request.line_height <= 0.0
         || !request.tracking.is_finite()
-        || request.max_width.is_some_and(|w| !w.is_finite() || w <= 0.0)
+        || request
+            .max_width
+            .is_some_and(|w| !w.is_finite() || w <= 0.0)
     {
         return Err(TextError::InvalidMetrics);
     }
-    if request.text.chars().count() > 100_000 || request.families.len() > 32 || request.variation_axes.len() > 32 {
+    if request.text.chars().count() > 100_000
+        || request.families.len() > 32
+        || request.variation_axes.len() > 32
+    {
         return Err(TextError::BudgetExceeded);
     }
 
     let mut builder = layout_cx.ranged_builder(fonts, &request.text, 1.0, true);
     builder.push_default(StyleProperty::FontSize(request.font_size));
-    builder.push_default(StyleProperty::LineHeight(LineHeight::Absolute(request.line_height)));
-    builder.push_default(StyleProperty::FontWeight(FontWeight::new(request.weight as f32)));
-    builder.push_default(StyleProperty::FontFamily(FontFamily::Source(Cow::Owned(family_source(&request.families)))));
-    if request.tracking != 0.0 { builder.push_default(StyleProperty::LetterSpacing(request.tracking)); }
+    builder.push_default(StyleProperty::LineHeight(LineHeight::Absolute(
+        request.line_height,
+    )));
+    builder.push_default(StyleProperty::FontWeight(FontWeight::new(
+        request.weight as f32,
+    )));
+    builder.push_default(StyleProperty::FontFamily(FontFamily::Source(Cow::Owned(
+        family_source(&request.families),
+    ))));
+    if request.tracking != 0.0 {
+        builder.push_default(StyleProperty::LetterSpacing(request.tracking));
+    }
     let variation_css = variation_source(&request.variation_axes);
     if !variation_css.is_empty() {
-        builder.push_default(StyleProperty::FontVariations(FontVariations::Source(Cow::Owned(variation_css))));
+        builder.push_default(StyleProperty::FontVariations(FontVariations::Source(
+            Cow::Owned(variation_css),
+        )));
     }
 
     let mut layout = builder.build(&request.text);
     layout.break_all_lines(request.max_width);
     let align = match request.align {
         TextAlign::Left => Alignment::Start,
-        TextAlign::Center => Alignment::Middle,
+        TextAlign::Center => Alignment::Center,
         TextAlign::Right => Alignment::End,
-        TextAlign::Justify => Alignment::Justified,
+        TextAlign::Justify => Alignment::Justify,
     };
     layout.align(align, AlignmentOptions::default());
 
@@ -139,12 +173,20 @@ pub(crate) fn layout_text(
         // pair those positions with Parley's atomic logical clusters so text
         // animators never split ligatures/combining sequences accidentally.
         for item in line.items() {
-            let PositionedLayoutItem::GlyphRun(glyph_run) = item else { continue; };
+            let PositionedLayoutItem::GlyphRun(glyph_run) = item else {
+                continue;
+            };
             let run = glyph_run.run();
             let face = run.font();
             let identity = format!("font-face:{}", face.index);
-            if !resolved_faces.iter().any(|entry| entry.identity == identity) {
-                resolved_faces.push(ResolvedFontFace { identity: identity.clone(), collection_index: face.index });
+            if !resolved_faces
+                .iter()
+                .any(|entry| entry.identity == identity)
+            {
+                resolved_faces.push(ResolvedFontFace {
+                    identity: identity.clone(),
+                    collection_index: face.index,
+                });
             }
 
             let mut clusters = Vec::new();
@@ -166,14 +208,25 @@ pub(crate) fn layout_text(
             let mut glyphs = Vec::with_capacity(positioned.len());
             let mut cluster_iter = run.visual_clusters();
             let mut current_cluster = cluster_iter.next();
-            let mut glyphs_remaining = current_cluster.as_ref().map(|c| c.glyphs().count()).unwrap_or(0);
+            let mut glyphs_remaining = current_cluster
+                .as_ref()
+                .map(|c| c.glyphs().count())
+                .unwrap_or(0);
             for glyph in positioned {
                 while glyphs_remaining == 0 {
                     current_cluster = cluster_iter.next();
-                    glyphs_remaining = current_cluster.as_ref().map(|c| c.glyphs().count()).unwrap_or(0);
-                    if current_cluster.is_none() { break; }
+                    glyphs_remaining = current_cluster
+                        .as_ref()
+                        .map(|c| c.glyphs().count())
+                        .unwrap_or(0);
+                    if current_cluster.is_none() {
+                        break;
+                    }
                 }
-                let range = current_cluster.as_ref().map(|c| c.text_range()).unwrap_or(run.text_range());
+                let range = current_cluster
+                    .as_ref()
+                    .map(|c| c.text_range())
+                    .unwrap_or(run.text_range());
                 glyphs.push(Glyph {
                     id: glyph.id,
                     cluster_start: range.start,
@@ -200,8 +253,17 @@ pub(crate) fn layout_text(
         }
     }
 
-    let bounds = TextBounds { x: 0.0, y: 0.0, width: layout.width(), height: layout.height() };
-    let requested_families = if request.families.is_empty() { vec!["sans-serif".into()] } else { request.families.clone() };
+    let bounds = TextBounds {
+        x: 0.0,
+        y: 0.0,
+        width: layout.width(),
+        height: layout.height(),
+    };
+    let requested_families = if request.families.is_empty() {
+        vec!["sans-serif".into()]
+    } else {
+        request.families.clone()
+    };
     let fallback_used = resolved_faces.len() > 1;
     Ok(TextLayout {
         text: request.text.clone(),
@@ -209,6 +271,10 @@ pub(crate) fn layout_text(
         runs,
         bounds,
         direction: direction(&request.text),
-        provenance: FontProvenance { requested_families, resolved_faces, fallback_used },
+        provenance: FontProvenance {
+            requested_families,
+            resolved_faces,
+            fallback_used,
+        },
     })
 }

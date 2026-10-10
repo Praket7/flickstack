@@ -1,4 +1,63 @@
-use flick_render_core::*;use flick_render_cpu::CpuRenderer;
-fn rect_path(x:f32,y:f32,w:f32,h:f32)->VectorPath{VectorPath{commands:vec![PathCommand::MoveTo(x,y),PathCommand::LineTo(x+w,y),PathCommand::LineTo(x+w,y+h),PathCommand::LineTo(x,y+h),PathCommand::Close]}}
-#[test]fn source_over_is_premultiplied_and_scene_linear(){let red=LinearRgba::from_unpremultiplied(1.0,0.0,0.0,0.5);let blue=LinearRgba::from_unpremultiplied(0.0,0.0,1.0,1.0);let c=red.source_over(blue);assert!((c.r-0.5).abs()<1e-6);assert!((c.b-0.5).abs()<1e-6);assert_eq!(c.a,1.0);let mid=srgb_to_linear(0.5);assert!(mid<0.25,"sRGB 0.5 must not be treated as linear 0.5");}
-#[test]fn cpu_renderer_fills_and_gradients_deterministically(){let scene=EvaluatedScene{width:8,height:4,background:LinearRgba::TRANSPARENT,fonts:vec![],layers:vec![SceneLayer{id:"r".into(),z_index:0,opacity:1.0,primitive:Primitive::Vector(VectorPrimitive{path:rect_path(1.0,1.0,6.0,2.0),fill:Some(Paint::LinearGradient{from:[1.0,0.0],to:[7.0,0.0],stops:vec![GradientStop{offset:0.0,color:LinearRgba::from_unpremultiplied(1.0,0.0,0.0,1.0)},GradientStop{offset:1.0,color:LinearRgba::from_unpremultiplied(0.0,0.0,1.0,1.0)}]}),stroke:None,transform:[1.0,0.0,0.0,1.0,0.0,0.0],opacity:1.0})}]};let a=CpuRenderer::new().render(&scene,0).unwrap();let b=CpuRenderer::new().render(&scene,0).unwrap();assert_eq!(a,b);assert!(a.get(1,1).r>a.get(6,1).r);assert!(a.get(6,1).b>a.get(1,1).b);}
+use flick_render_core::*;
+use flick_render_cpu::CpuRenderer;
+fn rect_path(x: f32, y: f32, w: f32, h: f32) -> VectorPath {
+    VectorPath {
+        commands: vec![
+            PathCommand::MoveTo(x, y),
+            PathCommand::LineTo(x + w, y),
+            PathCommand::LineTo(x + w, y + h),
+            PathCommand::LineTo(x, y + h),
+            PathCommand::Close,
+        ],
+    }
+}
+#[test]
+fn source_over_is_premultiplied_and_scene_linear() {
+    let red = LinearRgba::from_unpremultiplied(1.0, 0.0, 0.0, 0.5);
+    let blue = LinearRgba::from_unpremultiplied(0.0, 0.0, 1.0, 1.0);
+    let c = red.source_over(blue);
+    assert!((c.r - 0.5).abs() < 1e-6);
+    assert!((c.b - 0.5).abs() < 1e-6);
+    assert_eq!(c.a, 1.0);
+    let mid = srgb_to_linear(0.5);
+    assert!(mid < 0.25, "sRGB 0.5 must not be treated as linear 0.5");
+}
+#[test]
+fn cpu_renderer_fills_and_gradients_deterministically() {
+    let scene = EvaluatedScene {
+        width: 8,
+        height: 4,
+        background: LinearRgba::TRANSPARENT,
+        fonts: vec![],
+        layers: vec![SceneLayer {
+            id: "r".into(),
+            z_index: 0,
+            opacity: 1.0,
+            primitive: Primitive::Vector(VectorPrimitive {
+                path: rect_path(1.0, 1.0, 6.0, 2.0),
+                fill: Some(Paint::LinearGradient {
+                    from: [1.0, 0.0],
+                    to: [7.0, 0.0],
+                    stops: vec![
+                        GradientStop {
+                            offset: 0.0,
+                            color: LinearRgba::from_unpremultiplied(1.0, 0.0, 0.0, 1.0),
+                        },
+                        GradientStop {
+                            offset: 1.0,
+                            color: LinearRgba::from_unpremultiplied(0.0, 0.0, 1.0, 1.0),
+                        },
+                    ],
+                }),
+                stroke: None,
+                transform: [1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                opacity: 1.0,
+            }),
+        }],
+    };
+    let a = CpuRenderer::new().render(&scene, 0).unwrap();
+    let b = CpuRenderer::new().render(&scene, 0).unwrap();
+    assert_eq!(a, b);
+    assert!(a.get(1, 1).r > a.get(6, 1).r);
+    assert!(a.get(6, 1).b > a.get(1, 1).b);
+}

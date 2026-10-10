@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FlickSmith">
+  <rect width="512" height="512" rx="112" fill="#111111"/>
+  <path d="M132 116h248v72H214v70h142v72H214v66h-82V116z" fill="#ffffff"/>
+  <path d="M310 282l92 57-92 57V282z" fill="#ffffff"/>
+</svg>

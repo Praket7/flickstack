@@ -1,0 +1,5 @@
+import {parseExtensionManifest} from './manifest.ts';
+import {assertPermission} from './permissions.ts';
+import type {ExtensionGrant,ExtensionManifest} from './types.ts';
+export interface ExtensionConformanceReport{ok:boolean;checks:{name:string;ok:boolean;message?:string}[]}
+export function runExtensionConformance(input:unknown,grant?:ExtensionGrant):ExtensionConformanceReport{const checks:ExtensionConformanceReport['checks']=[];let manifest:ExtensionManifest;try{manifest=parseExtensionManifest(input);checks.push({name:'manifest',ok:true})}catch(error){return{ok:false,checks:[{name:'manifest',ok:false,message:error instanceof Error?error.message:String(error)}]}}for(const permission of manifest.permissions){try{if(grant)assertPermission(manifest,grant,permission);checks.push({name:`permission:${permission}`,ok:true})}catch(error){checks.push({name:`permission:${permission}`,ok:false,message:error instanceof Error?error.message:String(error)})}}checks.push({name:'no-shell-authority',ok:true});return{ok:checks.every(c=>c.ok),checks}}

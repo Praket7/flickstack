@@ -1,0 +1,28 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "flicksmith",
+  "version": "0.5.0",
+  "description": "Agent-native professional video creation with typed reversible editing, generated scenes, human-craft review, provenance, QC, collaboration, and native rendering.",
+  "author": {"name": "FlickSmith"},
+  "repository": "https://github.com/Praket7/flickstack",
+  "license": "Apache-2.0",
+  "keywords": ["video", "editing", "motion-graphics", "generation", "rendering", "creative-direction"],
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/flicksmith-setup/SKILL.md",
+      "interface": {
+        "displayName": "FlickSmith",
+        "shortDescription": "Create professional editable videos without generic AI-ad styling",
+        "longDescription": "Create, animate, revise, review, and render FlickSmith projects while preserving editable structure, provenance, semantic locks, checkpoints, intent receipts, and professional human-craft quality gates.",
+        "developerName": "FlickSmith",
+        "category": "Productivity",
+        "capabilities": ["Read", "Write"],
+        "defaultPrompt": [
+          "Set up FlickSmith and verify this environment can render a smoke-test project.",
+          "Create a professional editable video from my media. Build a brand-specific visual grammar and avoid generic AI-ad styling.",
+          "Review this FlickSmith project for technical QC and human-craft quality, repair only the failing ranges, and render the final video."
+        ]
+      }
+    }
+  }
+}

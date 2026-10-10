@@ -1,139 +1,77 @@
 # Changelog
 
-## [0.5.0-dev] - 2026-10-09
+## [0.5.0] - 2026-10-10
+
+### v0.5f — Extensibility, collaboration, and performance
+
+- Added a permissioned extension SDK for generation providers, media providers, effects, analyzers, exporters, and QC rules without generic shell or project-write authority.
+- Added SDK conformance checks and a safe QC-rule example.
+- Added checkpoint/revision-anchored review threads and approvals with fresh, ancestor, stale, and missing-anchor classification.
+- Added semantic SHA-256 render cache keys covering project/render revisions, assets, renderer/backend, color, fonts, effects/plugins, quality, and output format.
+- Added immutable version-matched render worker contracts and scheduling.
+- Added measured-hardware benchmark contracts requiring at least three samples and matching hardware/project fingerprints before regression claims.
+- Added portable ChatGPT/Work/Codex plugin, setup, smoke, and usage documentation.
+
+### v0.5e — Professional finish and human craft
+
+- Added explicit color/HDR intent, scope primitives, interchange/conform foundations, audio automation, and a process-isolated OpenFX host boundary.
+- Added a research-backed Human-Craft quality system that rejects generic AI-ad defaults including template repetition, decorative motion, transition spam, pacing monotony, weak sound, generic branding, narrative flatness, audiovisual desynchronization, continuity failures, and synthetic-evidence overuse.
+- Added localized craft repair plans and a typed `craft_review` action for creative plans.
+- Added chat-facing `plan_human_craft_v3` and `review_human_craft_v3` MCP tools.
+
+### v0.5d — Creative orchestration
+
+- Added declarative `CreativeActionPlan` contracts and a resumable executor for evidence placement, generation, generated scenes, native motion, responsive variants, QC, craft review, and localized repair.
+- Upgraded coverage planning so existing evidence suppresses unnecessary generation and coverage debt carries explicit generation eligibility/reasoning.
+- Added responsive/campaign variant planning and localized repair mapping.
 
 ### v0.5c — Generated Scene Assets
 
-- Added generated-scene contracts and deterministic strategy routing that prioritizes editable direct-alpha and multilayer paths before segmentation fallback or explicitly allowed flattened video.
-- Added typed Qwen-style layered-image, segmentation, and depth HTTP providers with capability/health checks, cancellation, sanitized failures, and provider-neutral core contracts.
-- Added occlusion analysis and transactional clean-plate repair planning so foreground/camera motion cannot silently reveal unsupported background pixels.
-- Added bounded depth normalization, conservative Z placement, camera safety envelopes, and editable native 2.5D motion presets.
-- Added native v3 generated-scene assembly using ordinary image layers, camera layers, typed operations, checkpoints, receipts, revision conflicts, and canonical generated-scene metadata.
-- Added generated-scene QC for missing clean plates, alpha halos, depth-order risk, camera excursions, clipping, and low decomposition confidence with localized layer/frame findings.
-- Added MCP and Studio generated-scene lifecycle surfaces for planning, building, animating, reviewing, and transactional layer regeneration.
-- Added canonical attachment integrity checks for source, layer, depth, mask, and clean-plate asset references, including plural clean-plate sets.
-- Added deterministic generated-scene acceptance coverage proving editable layers, active camera, independent layer motion, depth-derived parallax, provenance retention, save/reload survival, and no required image-to-video dependency.
+- Added deterministic scene strategy routing that prefers editable direct-alpha and multilayer paths before segmentation/depth fallback.
+- Added provider-neutral layered-image, segmentation, depth, clean-plate, occlusion, bounded-Z, camera-safety, native assembly, parallax, and generated-scene QC foundations.
+- Added MCP/Studio generated-scene lifecycle surfaces and deterministic editable-scene acceptance coverage.
 
-### v0.5c verification boundary
+### v0.5b — Generative Provider Runtime and provenance
 
-- Generation/provider tests use fixtures and mocked/local HTTP contracts; CI does not require live model credentials.
-- Native 2.5D remains the release-gating default. Flattened generated video is never silently substituted for editable scene structure.
-- Hidden-region repair jobs remain staged until generated assets are explicitly accepted into canonical project state.
-- The normal CI suite gates TypeScript, MCP, Studio, schema, generated-scene QC, and acceptance behavior. Native Rust/render/package verification remains capability-gated by the repository's native workflow on `main`.
+- Added provider-neutral generation contracts, durable cancellable jobs, staged output, explicit discard, budget/rights constraints, sanitized failures, and content-addressed acceptance.
+- Added immutable generation provenance and revision-safe MCP lifecycle tools.
+- Added an OpenAI Responses image-generation adapter using environment-sourced credentials and no persisted API keys.
 
-### v0.5b — Generative Provider Runtime & Provenance
+### v0.5a — Unified v3 agent runtime
 
-- Added provider-neutral generation contracts and deterministic capability routing without silent provider fallback.
-- Added durable generation jobs backed by the existing scheduler, with idempotent submission, cancellation, staged output, explicit discard, budget limits, commercial-rights requirements, and sanitized provider errors.
-- Added content-addressed generated assets with explicit acceptance into canonical v3 project state, immutable generation provenance, and SHA-256 deduplication.
-- Added v3 generation records and layered generated-scene records with duplicate/reference/finite-value/credential validation.
-- Added MCP lifecycle tools for provider discovery, generation submission/status/cancellation, explicit acceptance, staged discard, and provenance-record removal. Staging operations do not mutate the canonical project revision.
-- Added an OpenAI Responses image-generation adapter with environment-sourced credentials, image/edit requests, optional reference-image resolution, transparent-output parameters, streamed partial-image handling, response metadata, cancellation, and no persisted API keys.
-- Added self-review regression gates for registry lookup, provider capability metadata, unit/cost budgets, commercial-rights policy, reference inputs, provider metadata, and streaming behavior.
+- Unified professional v3 motion authoring behind revision-safe typed MCP tools with atomic persistence, checkpoints, Intent Receipts, Semantic Locks, undo/redo, path validation, credential rejection, native rendering, and diagnostics.
+- Preserved the verified v0.4 native/product base while exposing the v0.5 agent layer.
 
 ### Verification boundary
 
-- Provider tests use deterministic fixtures and mocked HTTP. CI never requires or spends a live model API credential.
-- Generated output is not part of canonical project state until an explicit revision-safe acceptance operation succeeds.
-- Rights metadata is recorded rather than inferred. Workflows that require confirmed commercial rights fail when a provider does not explicitly provide them.
-- Model/provider availability is capability-gated and never silently substituted.
+- Normal CI verifies TypeScript, Node/FFmpeg integration, MCP, generation fixtures, generated scenes, creative orchestration, professional finish contracts, collaboration/cache/SDK, human-craft review, and the clean-environment ChatGPT smoke gate.
+- Provider tests use fixtures/mocked HTTP and never require a paid credential.
+- Native Rust/OpenCV/GPU/package gates remain capability-specific workflows. Performance claims require measured matching hardware and are never fabricated.
 
 ## [0.4.0] - 2026-10-09
 
 ### Added
 
-- Versioned native render program/runtime path and semantic scene bridge from evaluated v3 motion layers into render-core vector, shaped-text, procedural and particle primitives.
-- Parley/HarfRust/Skrifa-backed native typography with retained resolved-font bytes and glyph/cluster provenance for render-core.
-- Deterministic scene-linear premultiplied CPU reference rendering and real `wgpu` device composition/readback.
-- Project-backed Studio Layer Tree, Inspector, Timeline/Dope Sheet, value/speed Curve Editor, spatial paths, 2.5D canvas gizmos, mask/camera authoring, and compositing Node Graph.
-- Procedural replicators, index context, falloffs and particles with deterministic hard budgets.
-- Optional native OpenCV point/planar tracking solver with confidence/error diagnostics and explicit unavailable capability when the backend is not linked.
-- Temporal Motion QC for static ratio, motion density, cut-only energy, dead space, occupancy, readability, safe spacing, single-plane motion, focal competition and end-card hold.
-- A 48-second brand-neutral premium acceptance project made entirely from editable native FlickSmith visual layers, including landscape and portrait variants.
-- Dedicated v0.4 native verification CI for Rust formatting/clippy/tests, optional OpenCV, and macOS/Windows Tauri package smoke.
-
-### Changed
-
-- Base release identity is now v0.4.0.
-- v3 final rendering routes through the native render contract; FFmpeg remains responsible for media decode/encode/mux rather than visual composition.
-- GPU rendering no longer returns a full-scene CPU frame while claiming a device path. v0.4 performs actual device composition of per-layer primitive rasters.
-- Studio workspaces are backed by canonical project edits instead of the original hard-coded demonstration panels.
+- Versioned native render program/runtime, semantic scene bridge, deterministic CPU reference pixels, real `wgpu` composition, professional typography, Studio authoring surfaces, procedural motion, tracking boundaries, Motion QC, and a native premium acceptance project.
+- Dedicated native verification CI for Rust formatting/clippy/tests, optional OpenCV, and macOS/Windows packaging.
 
 ### Verification boundary
 
-- The conversation runner verifies the TypeScript/editor/QC/acceptance suite and source contracts, but has no local Rust toolchain. Rust/OpenCV/native-package compilation is therefore a GitHub Actions release gate.
-- GPU composition is real device work; vector/text rasterization is still hybrid CPU-reference staging in v0.4 and is not described as full GPU vector rasterization.
+- GPU composition is real device work while v0.4 vector/text primitive rasterization remains a hybrid CPU-reference staging path.
 - Hardware GPU performance is reported only from a runner with a verified adapter.
 
 ## [0.3.0] - 2026-10-08
 
 ### Added
 
-- Project schema v3 and deterministic v2→v3 migration for structured motion compositions, reusable components, rigs, tracking records, audio analyses, responsive tokens, and motion styles.
-- Generic animated properties with professional curve types, velocity sampling, motion-style presets, deterministic behaviors, a bounded expression language, and published rig controls.
-- Unicode-aware typography/layout foundations, selectors/text animators, vector geometry, masks/mattes, 2.5D camera projection, motion-blur sampling, shared-element transitions, compositing DAGs, and tracking adapters.
-- Audio beat/downbeat/envelope signals and semantic sound-cue materialization for audio-driven animation.
-- Professional editable motion-component library spanning typography, product UI, data, annotation, and brand scenes.
-- RenderGraph v3 motion nodes and range-aware invalidation/QC routing.
-- Design QC with structural typography, layout, readability, collision, continuity, camera, safe-area, and blank-output checks with exact repair ranges.
-- Agent Director artifacts for creative briefs, motion grammar, storyboards, shots, sound plans, and scene receipts.
-- Studio Edit/Motion/Graph/Audio/Director workspace state and v3 typed motion controllers with conflict-safe revision handling.
-- OTIO v3 motion metadata plus safe structured SVG/Lottie import foundations and explicit color/OpenFX capability declarations.
-- Synthetic premium motion acceptance, parity, release, and security suites plus a measured scene-graph benchmark harness.
+- Project schema v3, professional motion graph, typography/vector/mask/camera/compositing foundations, tracking/audio signals, reusable motion components, Design QC, Director artifacts, Studio motion workspaces, structured interchange safety, and synthetic premium acceptance coverage.
 
-### Changed
+### Capability boundary
 
-- Base release identity is now v0.3.0.
-- Motion is compiled into the canonical RenderGraph instead of being treated as a baked side channel.
-- Professional authoring and agent workflows share the same v3 typed/reversible operation layer and checkpoint semantics.
-
-### Verified in this release runner
-
-- Deterministic v1→v2→v3 migration and v3 schema validation.
-- Motion-property curves, responsive layout, Unicode selectors, vectors, expressions, behaviors, rigs, scene evaluation, audio signals, transition/camera/tracking foundations, RenderGraph v3, Design QC, Director artifacts, Studio operations, and structured interchange safety.
-- Synthetic premium motion acceptance and RenderGraph timing/invalidation parity.
-- Existing v0.2 editing, FFmpeg, audio, multicam, perception, recovery, desktop-source, MCP, security, runtime-dependency, and integration regression suites.
-- CPU scene-graph evaluation benchmark with environment metadata in `benchmarks/motion-v03/current.json`.
-
-### Capability-gated / environment-blocked
-
-- Real WebGPU hardware preview FPS remains blocked in this runner; the benchmark records `null` instead of fabricating performance.
-- Native Rust/Tauri package compilation remains blocked because Cargo/Rust is unavailable in this runner.
-- Native OpenFX execution is disabled until a process-isolated trusted plugin host exists.
-- OCIO/ACES is declarative metadata/intent only; native color transforms are not claimed.
-- Full object/surface/3D-camera tracking, broad third-party plugin parity, and full 3D scene rendering are not claimed by v0.3.
+- Native Rust/Tauri, hardware WebGPU, OpenFX execution, and non-stub OCIO processing remained capability-gated in v0.3.
 
 ## [0.2.0] - 2026-10-08
 
 ### Added
 
-- Project schema v2 with deterministic v1 migration and embedded-audio preservation.
-- Canonical renderer-neutral RenderGraph, nested-composition validation, range invalidation, and renderer capability diagnostics.
-- Professional FFmpeg reference rendering for overlapping layers, nested compositions, transforms, opacity, rectangle masks, cross-dissolves, non-normal blend modes, typed color effects, within-clip speed ramps, audio buses/processors, and sidechain ducking.
-- GPU preview architecture with scheduling, LRU caches, adaptive quality, device-loss recovery, professional CPU-preview parity, WebGPU/WGSL source, native `wgpu` bridge source, and renderer-equivalence metrics.
-- Multicam audio sync, drift correction, reversible angle programs, and materialization.
-- Local visual evidence store, deterministic local embedding baseline, Tesseract OCR adapter, active perception, spatial Semantic Locks, and spatial coverage debt.
-- Durable SQLite jobs, crash recovery, atomic project saves, revision-safe desktop/UI edits, professional Studio controllers, canonical loopback MCP project sessions, and correctness-first professional audio preview.
-- Tauri 2 desktop source, cross-platform package CI, native `--smoke` hook, package manifest, and package evidence reporting.
-- Security controls for credential-shaped project fields, restricted subprocesses, local-root imports, and Wikimedia HTTPS host validation.
-
-### Changed
-
-- Base release identity is now v0.2.0.
-- FFmpeg remains an external/system-provided compatibility renderer in the desktop distribution policy; licensing is detected from the actual binary instead of assumed.
-- Agent, Studio, MCP, and desktop mutations converge on canonical project/revision/checkpoint semantics rather than separate UI state.
-
-### Verified in the release runner
-
-- TypeScript typecheck and the complete Node/FFmpeg test suite.
-- v1→v2 render compatibility including embedded audio.
-- Ten professional v0.2 end-to-end scenarios.
-- FFmpeg/preview normal-alpha equivalence under declared tolerance.
-- Real process-kill job/project recovery.
-- Real local Tesseract OCR plus local embedding/provenance invalidation.
-- MCP/security/runtime dependency audit and desktop frontend/package-manifest smoke evidence.
-
-### Environment-blocked verification
-
-- Real WebGPU hardware performance: the release runner cannot initialize a trustworthy WebGPU adapter, so performance metrics remain null/blocked rather than synthetic.
-- Native Rust/Tauri compilation and installer launch: the release runner has no Cargo/Rust toolchain. CI/source/smoke contracts are present, but a locally built native artifact is not claimed from this environment.
+- Project schema v2, renderer-neutral RenderGraph, professional FFmpeg reference rendering, GPU-preview architecture, multicam, local evidence/search, durable jobs/recovery, Tauri desktop source, security controls, and professional audio foundations.
