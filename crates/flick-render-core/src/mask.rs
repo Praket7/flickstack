@@ -1,3 +1,52 @@
-#[derive(Clone,Debug,PartialEq)]pub enum MaskShape{Rect{x:f32,y:f32,width:f32,height:f32},Ellipse{cx:f32,cy:f32,rx:f32,ry:f32}}
-#[derive(Clone,Debug,PartialEq)]pub struct Mask{pub shape:MaskShape,pub feather:f32,pub expansion:f32,pub invert:bool}
-impl Mask{pub fn coverage(&self,p:[f32;2])->f32{let inside=match self.shape{MaskShape::Rect{x,y,width,height}=>p[0]>=x-self.expansion&&p[0]<=x+width+self.expansion&&p[1]>=y-self.expansion&&p[1]<=y+height+self.expansion,MaskShape::Ellipse{cx,cy,rx,ry}=>{let rx=(rx+self.expansion).max(1e-6);let ry=(ry+self.expansion).max(1e-6);let dx=(p[0]-cx)/rx;let dy=(p[1]-cy)/ry;dx*dx+dy*dy<=1.}};let v=if inside{1.}else{0.};if self.invert{1.-v}else{v}}}
+#[derive(Clone, Debug, PartialEq)]
+pub enum MaskShape {
+    Rect {
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+    },
+    Ellipse {
+        cx: f32,
+        cy: f32,
+        rx: f32,
+        ry: f32,
+    },
+}
+#[derive(Clone, Debug, PartialEq)]
+pub struct Mask {
+    pub shape: MaskShape,
+    pub feather: f32,
+    pub expansion: f32,
+    pub invert: bool,
+}
+impl Mask {
+    pub fn coverage(&self, p: [f32; 2]) -> f32 {
+        let inside = match self.shape {
+            MaskShape::Rect {
+                x,
+                y,
+                width,
+                height,
+            } => {
+                p[0] >= x - self.expansion
+                    && p[0] <= x + width + self.expansion
+                    && p[1] >= y - self.expansion
+                    && p[1] <= y + height + self.expansion
+            }
+            MaskShape::Ellipse { cx, cy, rx, ry } => {
+                let rx = (rx + self.expansion).max(1e-6);
+                let ry = (ry + self.expansion).max(1e-6);
+                let dx = (p[0] - cx) / rx;
+                let dy = (p[1] - cy) / ry;
+                dx * dx + dy * dy <= 1.
+            }
+        };
+        let v = if inside { 1. } else { 0. };
+        if self.invert {
+            1. - v
+        } else {
+            v
+        }
+    }
+}
