@@ -16,6 +16,19 @@ use std::{
 };
 use thiserror::Error;
 use transform::{apply, matrix, mul, Matrix};
+
+type LocalLayerState = (
+    Vec3,
+    Vec3,
+    Vec3,
+    Vec3,
+    f64,
+    Matrix,
+    String,
+    i64,
+    Option<String>,
+);
+
 #[derive(Debug, Clone, Copy)]
 pub struct RenderSurface {
     pub width: f64,
@@ -82,20 +95,7 @@ impl MotionRuntime {
         if self.program.layers.len() > self.max_layers {
             return Err(RuntimeError::Budget);
         }
-        let mut local = HashMap::<
-            String,
-            (
-                Vec3,
-                Vec3,
-                Vec3,
-                Vec3,
-                f64,
-                Matrix,
-                String,
-                i64,
-                Option<String>,
-            ),
-        >::new();
+        let mut local = HashMap::<String, LocalLayerState>::new();
         for (index, l) in self.program.layers.iter().enumerate() {
             let id = l
                 .get("id")
@@ -139,7 +139,7 @@ impl MotionRuntime {
                 rotation[i] += orientation[i]
             }
             let op = l.get("opacity").unwrap_or(&Value::Null);
-            let opacity = if op.is_null() {
+            let opacity = (if op.is_null() {
                 1.
             } else {
                 apply_number(
@@ -147,9 +147,8 @@ impl MotionRuntime {
                     op.get("behaviors").and_then(Value::as_array),
                     ctx,
                 )
-            }
-            .max(0.)
-            .min(1.);
+            })
+            .clamp(0., 1.);
             let m = matrix(position, anchor, scale, rotation);
             local.insert(
                 id,
@@ -174,20 +173,7 @@ impl MotionRuntime {
         let mut world = HashMap::<String, Matrix>::new();
         fn world_for(
             id: &str,
-            local: &HashMap<
-                String,
-                (
-                    Vec3,
-                    Vec3,
-                    Vec3,
-                    Vec3,
-                    f64,
-                    Matrix,
-                    String,
-                    i64,
-                    Option<String>,
-                ),
-            >,
+            local: &HashMap<String, LocalLayerState>,
             world: &mut HashMap<String, Matrix>,
             vis: &mut HashSet<String>,
             depth: usize,
