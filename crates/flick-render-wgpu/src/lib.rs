@@ -257,8 +257,7 @@ impl GpuRenderer {
             pass.draw(0..3, 0..1);
         }
         let row = scene.width * 4;
-        let padded = ((row + wgpu::COPY_BYTES_PER_ROW_ALIGNMENT - 1)
-            / wgpu::COPY_BYTES_PER_ROW_ALIGNMENT)
+        let padded = row.div_ceil(wgpu::COPY_BYTES_PER_ROW_ALIGNMENT)
             * wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
         let size = padded as u64 * scene.height as u64;
         let readback = device.device.create_buffer(&wgpu::BufferDescriptor {
